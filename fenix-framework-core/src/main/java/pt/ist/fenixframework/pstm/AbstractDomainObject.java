@@ -11,6 +11,7 @@ import org.apache.ojb.broker.metadata.ClassDescriptor;
 
 import pt.ist.fenixframework.DomainObject;
 import pt.ist.fenixframework.FenixFramework;
+import pt.ist.fenixframework.pstm.consistencyPredicates.CannotUseConsistencyPredicates;
 
 public abstract class AbstractDomainObject implements DomainObject, dml.runtime.FenixDomainObject, Serializable {
     // this should be final, but the ensureIdInternal method prevents it
@@ -238,6 +239,7 @@ public abstract class AbstractDomainObject implements DomainObject, dml.runtime.
 
     protected void deleteDomainObject() {
 	checkDisconnected();
+	deleteMetaObject();
 	Transaction.deleteObject(this);
     }
 

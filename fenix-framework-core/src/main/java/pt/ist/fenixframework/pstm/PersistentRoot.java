@@ -3,6 +3,7 @@ package pt.ist.fenixframework.pstm;
 import jvstm.TransactionalCommand;
 import pt.ist.fenixframework.Config;
 import pt.ist.fenixframework.DomainObject;
+import pt.ist.fenixframework.pstm.consistencyPredicates.CannotUseConsistencyPredicates;
 
 @NoDomainMetaObjects
 public class PersistentRoot extends PersistentRoot_Base {
