@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="fenix-framework-core/src/main/java"/>
+	<classpathentry kind="src" path="fenix-framework-core/target/generated-sources"/>
 	<classpathentry kind="src" path="examples/bank-consistency/src_gen"/>
 	<classpathentry kind="src" path="dml/src/main/java"/>
 	<classpathentry kind="src" path="examples/bank-consistency/src/java"/>

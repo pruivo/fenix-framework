@@ -11,10 +11,13 @@ import org.apache.ojb.broker.metadata.ClassDescriptor;
 
 import pt.ist.fenixframework.DomainObject;
 import pt.ist.fenixframework.FenixFramework;
+import pt.ist.fenixframework.pstm.consistencyPredicates.CannotUseConsistencyPredicates;
 
 public abstract class AbstractDomainObject implements DomainObject, dml.runtime.FenixDomainObject, Serializable {
     // this should be final, but the ensureIdInternal method prevents it
     private long oid;
+
+    private VBox<PersistentDomainMetaObject> metaObject;
 
     public class UnableToDetermineIdException extends RuntimeException {
 	public UnableToDetermineIdException(Throwable cause) {
@@ -30,14 +33,30 @@ public abstract class AbstractDomainObject implements DomainObject, dml.runtime.
 	ensureIdInternal();
 	// ensureOid();
 	Transaction.storeNewObject(this);
+
+	initMetaObject(false);
+
+	if (!getClass().isAnnotationPresent(CannotUseConsistencyPredicates.class)) {
+	    PersistentDomainMetaObject metaObject = new PersistentDomainMetaObject();
+	    metaObject.setDomainObject(this);
+
+	    getPersistentMetaClass().addExistingPersistentDomainMetaObjects(getMetaObject());
+	}
     }
 
     protected AbstractDomainObject(DomainObjectAllocator.OID oid) {
 	// this constructor exists only as part of the allocate-instance
 	// protocol
 	this.oid = oid.oid;
+
+	initMetaObject(true);
     }
 
+    private void initMetaObject(boolean allocateOnly) {
+	metaObject = VBox.makeNew(this, "metaObject", allocateOnly, false);
+    }
+
+    @Override
     public final Integer getIdInternal() {
 	return (int) (this.oid & 0x7FFFFFFF);
     }
@@ -96,12 +115,14 @@ public abstract class AbstractDomainObject implements DomainObject, dml.runtime.
 	return super.equals(obj);
     }
 
+    @Override
     public long getOID() {
 	return getOid();
     }
 
     // duplicate method (see getOID()). This is the name that should stick.
     // the other is to go away
+    @Override
     public long getOid() {
 	return oid;
     }
@@ -156,13 +177,51 @@ public abstract class AbstractDomainObject implements DomainObject, dml.runtime.
 	return null;
     }
 
+    public PersistentDomainMetaObject getMetaObject() {
+	return metaObject.get(this, "metaObject");
+    }
+
+    public void justSetMetaObject(PersistentDomainMetaObject persistentMetaObject) {
+	metaObject.put(this, "metaObject", persistentMetaObject);
+    }
+
+    private void setMetaObject(PersistentDomainMetaObject persistentMetaObject) {
+	persistentMetaObject.setDomainObject(this);
+    }
+
+    private void removeMetaObject() {
+	getMetaObject().removeDomainObject();
+    }
+
+    /**
+     * This should be invoked only when this DO is being deleted.
+     */
+    private void deleteMetaObject() {
+	if (getMetaObject() != null) {
+	    getMetaObject().delete();
+	}
+    }
+
+    private Long get$oidMetaObject() {
+	pt.ist.fenixframework.pstm.AbstractDomainObject value = getMetaObject();
+	return (value == null) ? null : value.getOid();
+    }
+
     public void readFromResultSet(java.sql.ResultSet rs) throws java.sql.SQLException {
 	int txNumber = Transaction.current().getNumber();
 	readSlotsFromResultSet(rs, txNumber);
+	readMetaObjectFromResultSet(rs, txNumber);
+    }
+
+    protected void readMetaObjectFromResultSet(java.sql.ResultSet rs, int txNumber) throws SQLException {
+	PersistentDomainMetaObject metaObject = pt.ist.fenixframework.pstm.ResultSetReader
+		.readDomainObject(rs, "OID_META_OBJECT");
+	this.metaObject.persistentLoad(metaObject, txNumber);
     }
 
     protected abstract void readSlotsFromResultSet(java.sql.ResultSet rs, int txNumber) throws java.sql.SQLException;
 
+    @Override
     public boolean isDeleted() {
 	throw new UnsupportedOperationException();
     }
@@ -180,7 +239,13 @@ public abstract class AbstractDomainObject implements DomainObject, dml.runtime.
 	    }
 	}
 
+	deleteMetaObject();
+
 	Transaction.deleteObject(this);
+    }
+
+    private PersistentDomainMetaClass getPersistentMetaClass() {
+	return PersistenceFenixFrameworkRoot.getInstance().getPersistentDomainMetaClass(this.getClass());
     }
 
     protected int getColumnIndex(final ResultSet resultSet, final String columnName, final Integer[] columnIndexes,
@@ -217,6 +282,7 @@ public abstract class AbstractDomainObject implements DomainObject, dml.runtime.
 	}
     }
 
+    @Override
     public final String getExternalId() {
 	return String.valueOf(getOID());
     }

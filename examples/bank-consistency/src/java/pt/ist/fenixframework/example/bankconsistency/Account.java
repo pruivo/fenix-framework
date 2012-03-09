@@ -1,6 +1,6 @@
 package pt.ist.fenixframework.example.bankconsistency;
 
-import jvstm.cps.ConsistencyPredicate;
+import pt.ist.fenixframework.pstm.consistencyPredicates.ConsistencyPredicate;
 
 public class Account extends Account_Base {
 
@@ -49,11 +49,6 @@ public class Account extends Account_Base {
 
     public void delete() {
 	deleteDomainObject();
-    }
-
-    @ConsistencyPredicate
-    public boolean checkHasDescription() {
-	return getDescription() != null && !getDescription().isEmpty();
     }
 
     @ConsistencyPredicate

@@ -1,34 +1,40 @@
 package pt.ist.fenixframework.pstm;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
 import java.util.concurrent.locks.Lock;
 
 import jvstm.ActiveTransactionsRecord;
 import jvstm.CommitException;
 import jvstm.ResumeException;
 import jvstm.VBoxBody;
+import jvstm.cps.ChainedIterator;
 import jvstm.cps.ConsistencyCheckTransaction;
+import jvstm.cps.ConsistencyException;
 import jvstm.cps.ConsistentTopLevelTransaction;
+import jvstm.cps.Depended;
 import jvstm.cps.DependenceRecord;
 import jvstm.util.Cons;
-import pt.ist.fenixframework.DomainObject;
-import pt.ist.fenixframework.TxIntrospector;
-import pt.ist.fenixframework.TxIntrospector.Entry;
-import pt.ist.fenixframework.TxIntrospector.RelationChangelog;
 
-import pt.ist.fenixframework.pstm.DBChanges.AttrChangeLog;
-
+import org.apache.log4j.Logger;
 import org.apache.ojb.broker.PersistenceBroker;
 import org.apache.ojb.broker.PersistenceBrokerFactory;
 import org.apache.ojb.broker.accesslayer.LookupException;
 
-import org.apache.log4j.Logger;
+import pt.ist.fenixframework.DomainObject;
+import pt.ist.fenixframework.TxIntrospector;
+import pt.ist.fenixframework.pstm.DBChanges.AttrChangeLog;
+import pt.ist.fenixframework.pstm.consistencyPredicates.CannotUseConsistencyPredicates;
+import pt.ist.fenixframework.pstm.consistencyPredicates.ConsistencyPredicate;
+import pt.ist.fenixframework.pstm.consistencyPredicates.KnownConsistencyPredicate;
+import pt.ist.fenixframework.pstm.consistencyPredicates.PersistentDependenceRecord;
 
 public class TopLevelTransaction extends ConsistentTopLevelTransaction implements FenixTransaction, TxIntrospector {
 
@@ -38,6 +44,8 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
 
     private static final Object COMMIT_LISTENERS_LOCK = new Object();
     private static volatile Cons<CommitListener> COMMIT_LISTENERS = Cons.empty();
+
+    protected HashSet<RelationList<? extends DomainObject, ? extends DomainObject>> relationListChanges = new HashSet<RelationList<? extends DomainObject, ? extends DomainObject>>();
 
     public static void addCommitListener(CommitListener listener) {
 	synchronized (COMMIT_LISTENERS_LOCK) {
@@ -84,7 +92,7 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
     // transaction does not allow more changes
     private DBChanges dbChanges = null;
 
-    private ServiceInfo serviceInfo = ServiceInfo.getCurrentServiceInfo();
+    private final ServiceInfo serviceInfo = ServiceInfo.getCurrentServiceInfo();
 
     private PersistenceBroker broker;
 
@@ -191,14 +199,17 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
 	this.dbChanges = new DBChanges();
     }
 
+    @Override
     public PersistenceBroker getOJBBroker() {
 	return broker;
     }
 
+    @Override
     public DomainObject readDomainObject(String classname, int oid) {
 	return TransactionChangeLogs.readDomainObject(broker, classname, oid);
     }
 
+    @Override
     public void setReadOnly() {
 	// a null dbChanges indicates a read-only tx
 	this.dbChanges = null;
@@ -288,6 +299,11 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
     }
 
     @Override
+    public <T> void setBoxValueDelayed(VBox<T> vbox, T value) {
+	setBoxValue(vbox, value);
+    }
+
+    @Override
     public <T> void setPerTxValue(jvstm.PerTxBox<T> box, T value) {
 	if (dbChanges == null) {
 	    throw new IllegalWriteException();
@@ -296,6 +312,7 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
 	}
     }
 
+    @Override
     public <T> T getBoxValue(VBox<T> vbox, Object obj, String attr) {
 	numBoxReads++;
 	T value = getLocalValue(vbox);
@@ -328,6 +345,7 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
 	return (value == NULL_VALUE) ? null : value;
     }
 
+    @Override
     public boolean isBoxValueLoaded(VBox vbox) {
 	Object localValue = getLocalValue(vbox);
 
@@ -343,6 +361,7 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
 	return (body.value != VBox.NOT_LOADED_VALUE);
     }
 
+    @Override
     public DBChanges getDBChanges() {
 	if (dbChanges == null) {
 	    // if it is null, it means that the transaction is a read-only
@@ -353,6 +372,7 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
 	}
     }
 
+    @Override
     public boolean isWriteTransaction() {
 	return ((dbChanges != null) && dbChanges.needsWrite()) || super.isWriteTransaction();
     }
@@ -442,24 +462,52 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
 
     // consistency-predicates-system methods
 
+    // check consistency predicates of a changed object
     @Override
-    protected void checkConsistencyPredicates() {
-	// check all the consistency predicates for the objects modified in this
-	// transaction
-	for (Object obj : getDBChanges().getModifiedObjects()) {
-	    checkConsistencyPredicates(obj);
+    protected void recheckDependenceRecord(DependenceRecord dependence) {
+	PersistentDependenceRecord dependenceRecord = (PersistentDependenceRecord) dependence;
+	Pair pair = checkPredicateForOneObject(dependenceRecord.getDependent(), dependenceRecord.getPredicate(),
+		dependenceRecord.isConsistent());
+	if (pair == null) {
+	    // a null return means that the predicate was already checked
+	    return;
 	}
 
-	super.checkConsistencyPredicates();
+	Set<Depended> newDependedSet = (Set<Depended>) pair.first;
+
+	for (Depended oldDepended : dependenceRecord.getDependedDomainMetaObjects()) {
+	    if (!newDependedSet.remove(oldDepended)) {
+		// if we didn't find the oldDepended in the newDepended, it's
+		// because it is no longer a depended, so remove the dependence
+		oldDepended.removeDependence(dependenceRecord);
+	    }
+	}
+
+	// the elements remaining in the set newDepended are new and
+	// should be added to the dependence record
+	// likewise, the dependence record should be added to those depended
+	for (Depended newDepended : newDependedSet) {
+	    newDepended.addDependence(dependenceRecord);
+	}
+
+	// update the consistent value of the dependence record
+	dependenceRecord.setConsistent((Boolean) pair.second);
     }
 
+    // check consistency predicates of a new object
     @Override
-    protected void checkConsistencyPredicates(Object obj) {
-	if (getDBChanges().isDeleted(obj)) {
-	    // don't check deleted objects
+    protected void checkConsistencyPredicates(Object newObject) {
+	if (newObject.getClass().isAnnotationPresent(CannotUseConsistencyPredicates.class)) {
 	    return;
-	} else {
-	    super.checkConsistencyPredicates(obj);
+	}
+	AbstractDomainObject ado = (AbstractDomainObject) newObject;
+	PersistentDomainMetaClass metaClass = ado.getMetaObject().getPersistentDomainMetaClass();
+	for (KnownConsistencyPredicate knownPredicate : metaClass.getAllConsistencyPredicates()) {
+	    Method predicate = knownPredicate.getPredicate();
+	    Pair pair = checkPredicateForOneObject(newObject, predicate, true);
+	    if (pair != null) {
+		new PersistentDependenceRecord(newObject, knownPredicate, (Set<Depended>) pair.first, (Boolean) pair.second);
+	    }
 	}
     }
 
@@ -470,17 +518,155 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
 
     @Override
     protected Iterator<DependenceRecord> getDependenceRecordsToRecheck() {
-	// for now, just return an empty iterator
-	return Util.emptyIterator();
+	updateWriteSetWithRelationChanges();
+
+	Cons<Iterator<DependenceRecord>> iteratorsList = Cons.empty();
+	for (jvstm.VBox box : boxesWritten.keySet()) {
+	    Depended dep = ((AbstractDomainObject) ((VBox) box).getOwnerObject()).getMetaObject();
+	    if (dep != null) {
+		iteratorsList = iteratorsList.cons(dep.getDependenceRecords().iterator());
+	    }
+	}
+
+	return new ChainedIterator<DependenceRecord>(iteratorsList.iterator());
+    }
+
+    protected void updateWriteSetWithRelationChanges() {
+	for (RelationList relationChanged : relationListChanges) {
+	    relationChanged.consolidateElementsIfLoaded();
+	}
+    }
+
+    /*
+     * This method checks one predicate, returning the set of objects on which
+     * the check depended. If this same predicate was already checked for this
+     * object, the check is skipped and the method returns null to indicate it.
+     */
+    protected Pair checkPredicateForOneObject(Object obj, Method predicate, boolean wasConsistent) {
+	Pair toCheck = new Pair(obj, predicate);
+
+	if (getDBChanges().isDeleted(obj)) {
+	    // Deleted objects no longer have to be consistent
+	    return null;
+	}
+
+	if (alreadyChecked.contains(toCheck)) {
+	    // returning null means that no check was actually done, because it
+	    // is repeated
+	    return null;
+	}
+
+	alreadyChecked.add(toCheck);
+
+	ConsistencyCheckTransaction tx = makeConsistencyCheckTransaction(obj);
+	tx.start();
+
+	boolean predicateOk = false;
+	boolean finished = false;
+
+	Class<? extends ConsistencyException> excClass = null;
+	boolean inconsistencyTolerant = false;
+	ConsistencyPredicate consistencyPredicateAnnotation = predicate.getAnnotation(ConsistencyPredicate.class);
+	if (consistencyPredicateAnnotation != null) {
+	    excClass = consistencyPredicateAnnotation.value();
+	    inconsistencyTolerant = consistencyPredicateAnnotation.inconsistencyTolerant();
+	} else {
+	    jvstm.cps.ConsistencyPredicate consistencyPredicateJVSTMAnnotation = predicate
+		    .getAnnotation(jvstm.cps.ConsistencyPredicate.class);
+	    excClass = consistencyPredicateJVSTMAnnotation.value();
+	}
+	try {
+	    predicateOk = (Boolean) (predicate.invoke(obj));
+	    Transaction.commit();
+	    finished = true;
+	} catch (InvocationTargetException ite) {
+	    if (inconsistencyTolerant && !wasConsistent) {
+		// if the predicate is inconsistency-tolerant, and we are editing an object
+		// whose previous state was also inconsistent, the transaction should still
+		// proceed and commit.
+		return new Pair(tx.getDepended(), false);
+	    }
+	    Throwable cause = ite.getCause();
+
+	    ConsistencyException exc;
+
+	    // only wrap the cause if it is not a ConsistencyException already
+	    if (cause instanceof ConsistencyException) {
+		exc = (ConsistencyException) cause;
+	    } else {
+		try {
+		    exc = excClass.newInstance();
+		} catch (Throwable t) {
+		    throw new Error(t);
+		}
+		exc.initCause(cause);
+	    }
+
+	    exc.init(obj, predicate);
+	    throw exc;
+	} catch (Throwable t) {
+	    // any other kind of throwable is an Error in the framework that should
+	    // be fixed
+	    throw new Error(t);
+	} finally {
+	    if (!finished) {
+		Transaction.abort();
+	    }
+	}
+
+	if (predicateOk) {
+	    return new Pair(tx.getDepended(), true);
+	} else if (inconsistencyTolerant && !wasConsistent) {
+	    // if the predicate is inconsistency-tolerant, and we are editing an object
+	    // whose previous state was also inconsistent, the transaction should still
+	    // proceed and commit.
+	    return new Pair(tx.getDepended(), false);
+	}
+	ConsistencyException exc;
+	try {
+	    exc = excClass.newInstance();
+	} catch (Throwable t) {
+	    throw new Error(t);
+	}
+	exc.init(obj, predicate);
+	throw exc;
+    }
+
+    public static final class Pair {
+	public final Object first;
+	public final Object second;
+
+	public Pair(Object first, Object second) {
+	    this.first = first;
+	    this.second = second;
+	}
+
+	@Override
+	public int hashCode() {
+	    return first.hashCode() + second.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object other) {
+	    if (other.getClass() != Pair.class) {
+		return false;
+	    }
+
+	    Pair p2 = (Pair) other;
+
+	    return (p2.first == first) && (p2.second == second);
+	}
     }
 
     // implement the TxIntrospector interface
 
+    @Override
     public Set<DomainObject> getNewObjects() {
 	Set<DomainObject> emptySet = Collections.emptySet();
 	return isWriteTransaction() ? getDBChanges().getNewObjects() : emptySet;
     }
 
+    @Override
     public Set<DomainObject> getModifiedObjects() {
 	Set<DomainObject> emptySet = Collections.emptySet();
 	return isWriteTransaction() ? getDBChanges().getModifiedObjects() : emptySet;
@@ -490,6 +676,7 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
 	return isWriteTransaction() ? getDBChanges().isDeleted(obj) : false;
     }
     
+    @Override
     public Set<Entry> getReadSetLog() {
 	throw new Error("getReadSetLog not implemented yet");
 	// Set<Entry> entries = new HashSet<Entry>(bodiesRead.size());
@@ -501,6 +688,7 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
 	// return entries;
     }
 
+    @Override
     public Set<Entry> getWriteSetLog() {
 	Set<AttrChangeLog> attrChangeLogs = getDBChanges().getAttrChangeLogs();
 	Set<Entry> entries = new HashSet<Entry>(attrChangeLogs.size());
@@ -513,6 +701,11 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
 	return entries;
     }
 
+    @Override
+    public void registerRelationListChanges(RelationList<? extends DomainObject, ? extends DomainObject> relationList) {
+	relationListChanges.add(relationList);
+    }
+
     // ---------------------------------------------------------------
     // keep a log of all relation changes, which are more
     // coarse-grained and semantically meaningfull than looking only
@@ -520,10 +713,12 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
 
     private HashMap<RelationTupleChange, RelationTupleChange> relationTupleChanges = null;
 
+    @Override
     public void logRelationAdd(String relationName, DomainObject o1, DomainObject o2) {
 	logRelationTuple(relationName, o1, o2, false);
     }
 
+    @Override
     public void logRelationRemove(String relationName, DomainObject o1, DomainObject o2) {
 	logRelationTuple(relationName, o1, o2, true);
     }
@@ -537,6 +732,7 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
 	relationTupleChanges.put(log, log);
     }
 
+    @Override
     public Set<RelationChangelog> getRelationsChangelog() {
 	Set<RelationChangelog> entries = new HashSet<RelationChangelog>();
 
@@ -562,10 +758,12 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
 	    this.remove = remove;
 	}
 
+	@Override
 	public int hashCode() {
 	    return relationName.hashCode() + obj1.hashCode() + obj2.hashCode();
 	}
 
+	@Override
 	public boolean equals(Object obj) {
 	    if ((obj != null) && (obj.getClass() == this.getClass())) {
 		RelationTupleChange other = (RelationTupleChange) obj;
