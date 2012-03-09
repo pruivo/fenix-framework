@@ -3,7 +3,9 @@ package pt.ist.fenixframework.pstm;
 import jvstm.TransactionalCommand;
 import pt.ist.fenixframework.Config;
 import pt.ist.fenixframework.DomainObject;
+import pt.ist.fenixframework.pstm.consistencyPredicates.CannotUseConsistencyPredicates;
 
+@CannotUseConsistencyPredicates
 public class PersistentRoot extends PersistentRoot_Base {
 
     private static final String initialRootKey = "pt.ist.fenixframework.root";
@@ -53,6 +55,7 @@ public class PersistentRoot extends PersistentRoot_Base {
     public static void initRootIfNeeded(final Config config) {
 	if ((config != null) && (config.getRootClass() != null)) {
 	    Transaction.withTransaction(new TransactionalCommand() {
+		@Override
 		public void doIt() {
 		    PersistentRoot persRoot = getFirstInChain();
 		    if (persRoot.getRootObject() == null) {
