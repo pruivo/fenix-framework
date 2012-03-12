@@ -20,6 +20,8 @@ public class Main {
 		updateRepositoryStructureIfNeeded = true;
 		createRepositoryStructureIfNotExists = true;
 		rootClass = BankConsistencyApplication.class;
+		errorfIfDeletingObjectNotDisconnected = true;
+		errorIfChangingDeletedObject = true;
 	    }
 	};
 	FenixFramework.initialize(config);
@@ -67,7 +69,7 @@ public class Main {
 		Account.class);
 	KnownConsistencyPredicate testPredicate = null;
 	for (KnownConsistencyPredicate predicate : accountMetaClass.getDeclaredConsistencyPredicates()) {
-	    testPredicate = predicate;
+	    //accountMetaClass.removeDeclaredConsistencyPredicates(predicate);
 	}
     }
 
@@ -132,36 +134,36 @@ public class Main {
     private static void createDOsInconsistent() {
 	//new Client("Nick");
 
-	/*Client clientVick = new Client("Vick");
-	new ClientInfo(clientVick, null);*/
+	//Client clientVick = new Client("Vick");
+	//new ClientInfo(clientVick, null);
 
-	/*Client clientRick = new Client("Rick");
-	new ClientInfo(clientRick, "");*/
+	//Client clientRick = new Client("Rick");
+	//new ClientInfo(clientRick, "");
 
-	/*Client clientFrancis = new Client("Francis");
-	new ClientInfo(clientFrancis, "4");
-	Account accountFrancis = new Account(clientFrancis, 1);
-	accountFrancis.close();
-	accountFrancis.setDescription("This account is inconsistent!");*/
+	//Client clientFrancis = new Client("Francis");
+	//new ClientInfo(clientFrancis, "4");
+	//Account accountFrancis = new Account(clientFrancis, 1);
+	//accountFrancis.close();
+	//accountFrancis.setDescription("This account is inconsistent!");
 
-	/*Client clientLouis = new Client("Louis");
-	new ClientInfo(clientLouis, "5");
-	Account accountLouisA = new Account(clientLouis, -20);
-	Account accountLouisB = new Account(clientLouis, 19);
-	accountLouisB.setDescription("This account has an inconsistent Client!");*/
+	//Client clientLouis = new Client("Louis");
+	//new ClientInfo(clientLouis, "5");
+	//Account accountLouisA = new Account(clientLouis, -20);
+	//Account accountLouisB = new Account(clientLouis, 19);
+	//accountLouisB.setDescription("This account has an inconsistent Client!");
 
-	/*Company companyApple = new Company("Apple");
-	Client clientElvis = new Client("Elvis");
-	new ClientInfo(clientElvis, "7");
-	companyApple.addClients(clientElvis);*/
+	//Company companyApple = new Company("Apple");
+	//Client clientElvis = new Client("Elvis");
+	//new ClientInfo(clientElvis, "7");
+	//companyApple.addClients(clientElvis);
 
-	/*Company companyApple = new Company("Apple");
-	Client clientBill1 = new Client("Bill");
-	new ClientInfo(clientBill1, "10");
-	Client clientBill2 = new Client("Bill");
-	new ClientInfo(clientBill2, "11");
-	companyApple.addClients(clientBill1);
-	companyApple.addClients(clientBill2);*/
+	//Company companyApple = new Company("Apple");
+	//Client clientBill1 = new Client("Bill");
+	//new ClientInfo(clientBill1, "10");
+	//Client clientBill2 = new Client("Bill");
+	//new ClientInfo(clientBill2, "11");
+	//companyApple.addClients(clientBill1);
+	//companyApple.addClients(clientBill2);
     }
 
     @Atomic
@@ -198,18 +200,19 @@ public class Main {
 	BankConsistencyApplication app = BankConsistencyApplication.getInstance();
 	for (Client client : app.getClients()) {
 	    if (client.getName().equals("Bill")) {
-		/*client.setClientInfo(null);
-		new ClientInfo(client, "");*/
+		//client.setClientInfo(null);
+		//new ClientInfo(client, "");
 
 		//new Account(client, -2);
 	    }
 	}
 
 	for (Company company : app.getCompanies()) {
-	    /*Client newClientBill = new Client("Bill");
-	    new ClientInfo(newClientBill, "12");
-	    company.addClients(newClientBill);
-	    break;*/
+	    //Client newClientBill = new Client("Bill");
+	    //new ClientInfo(newClientBill, "12");
+	    //company.addClients(newClientBill);
+
+	    break;
 	}
     }
 
@@ -219,30 +222,30 @@ public class Main {
 	for (Client client : app.getClients()) {
 	    if (client.getName().equals("Bill")) {
 		ClientInfo billClientInfo = client.getClientInfo();
-		/*client.setClientInfo(null);
-		billClientInfo.delete();*/
+		//client.setClientInfo(null);
+		//billClientInfo.delete();
 
 		for (Account account : client.getAccounts()) {
 		    String description = account.getDescription();
 		    if (description != null && description.equals("2k account")) {
-			/*account.removeClient();
-			account.removeApplication();
-			account.delete();*/
+			//account.removeClient();
+			//account.removeApplication();
+			//account.delete();
 		    }
 
-		    /*account.removeApplication();
-		    account.removeClient();
-		    account.delete();*/
+		    //account.removeClient();
+		    //account.removeApplication();
+		    //account.delete();
 		}
 
 		for (Company company : client.getCompanies()) {
 		    //company.removeClients(client);
 		}
 
-		/*billClientInfo.removeClient();
-		billClientInfo.delete();
-		client.removeApplication();
-		client.delete();*/
+		//billClientInfo.removeClient();
+		//billClientInfo.delete();
+		//client.removeApplication();
+		//client.delete();
 	    }
 	}
     }
@@ -267,7 +270,7 @@ public class Main {
     private static void removeAccountConsistent() {
 	BankConsistencyApplication app = BankConsistencyApplication.getInstance();
 	for (Client client : app.getClients()) {
-	    if (client.getName().equals("Zoey")) {
+	    if (client.getName().equals("Zoeyy")) {
 		for (Account account : client.getAccounts()) {
 		    account.removeApplication();
 		    account.removeClient();
