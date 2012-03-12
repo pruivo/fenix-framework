@@ -111,7 +111,7 @@ relation KnownConsistencyPredicatePersistentDependenceRecords {
 }
 
 relation KnownConsistencyPredicateInconsistentDependenceRecords {
-	consistencyPredicates.KnownConsistencyPredicate playsRole;
+	consistencyPredicates.KnownConsistencyPredicate playsRole inconsistentPredicate;
 	consistencyPredicates.PersistentDependenceRecord playsRole inconsistentDependenceRecords {
 		multiplicity*;
 	}
