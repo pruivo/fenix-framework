@@ -21,31 +21,31 @@ class PersistentRoot {
 }
 
 
-class PersistenceFenixFrameworkRoot {
+class DomainFenixFrameworkRoot {
 }
 
-class PersistentDomainMetaClass {
+class DomainMetaClass {
 	DomainClass domainClass;
 }
 
-class consistencyPredicates.KnownConsistencyPredicate {
+class consistencyPredicates.DomainConsistencyPredicate {
 	PredicateMethod predicate;
 }
 
-	class consistencyPredicates.PublicConsistencyPredicate extends consistencyPredicates.KnownConsistencyPredicate {
+	class consistencyPredicates.PublicConsistencyPredicate extends consistencyPredicates.DomainConsistencyPredicate {
 	}
 	
 	class consistencyPredicates.FinalConsistencyPredicate extends consistencyPredicates.PublicConsistencyPredicate {
 	}
 	
-	class consistencyPredicates.PrivateConsistencyPredicate extends consistencyPredicates.KnownConsistencyPredicate {
+	class consistencyPredicates.PrivateConsistencyPredicate extends consistencyPredicates.DomainConsistencyPredicate {
 	}
 	
-class consistencyPredicates.PersistentDependenceRecord {
+class consistencyPredicates.DomainDependenceRecord {
 	Boolean consistent;
 }
 
-class PersistentDomainMetaObject {
+class DomainMetaObject {
 }
 
 
@@ -65,33 +65,33 @@ relation PersistentRootAbstractDomainObject {
 
 
 
-relation PersistenceFenixFrameworkRootPersistentDomainMetaClasses {
-	PersistenceFenixFrameworkRoot playsRole persistenceFenixFrameworkRoot;
-	PersistentDomainMetaClass playsRole persistentDomainMetaClasses {
+relation DomainFenixFrameworkRootDomainMetaClasses {
+	DomainFenixFrameworkRoot playsRole domainFenixFrameworkRoot;
+	DomainMetaClass playsRole domainMetaClasses {
 		multiplicity*;
 	}
 }
 
 
-relation PersistentDomainMetaSuperclassPersistentDomainMetaSubclasses {
-	PersistentDomainMetaClass playsRole persistentDomainMetaSuperclass;
-	PersistentDomainMetaClass playsRole persistentDomainMetaSubclasses {
+relation DomainMetaSuperclassDomainMetaSubclasses {
+	DomainMetaClass playsRole domainMetaSuperclass;
+	DomainMetaClass playsRole domainMetaSubclasses {
 		multiplicity*;
 	}
 }
 
-relation PersistentDomainMetaClassPersistentDomainMetaObjects {
-	PersistentDomainMetaObject playsRole existingPersistentDomainMetaObjects {
+relation DomainMetaClassDomainMetaObjects {
+	DomainMetaObject playsRole existingDomainMetaObjects {
 		multiplicity*;
 	}
-	PersistentDomainMetaClass playsRole persistentDomainMetaClass;
+	DomainMetaClass playsRole domainMetaClass;
 }
 
 
 
-relation PersistentDomainMetaClassDeclaredConsistencyPredicates {
-	PersistentDomainMetaClass playsRole persistentDomainMetaClass;
-	consistencyPredicates.KnownConsistencyPredicate playsRole declaredConsistencyPredicates {
+relation DomainMetaClassDeclaredConsistencyPredicates {
+	DomainMetaClass playsRole domainMetaClass;
+	consistencyPredicates.DomainConsistencyPredicate playsRole declaredConsistencyPredicates {
 		multiplicity*;
 	}
 }
@@ -103,37 +103,37 @@ relation PublicConsistencyPredicateOverriddenPublicConsistencyPredicatesOverridi
 	}
 }
 
-relation KnownConsistencyPredicatePersistentDependenceRecords {
-	consistencyPredicates.KnownConsistencyPredicate playsRole knownConsistencyPredicate;
-	consistencyPredicates.PersistentDependenceRecord playsRole persistentDependenceRecords {
+relation DomainConsistencyPredicateDomainDependenceRecords {
+	consistencyPredicates.DomainConsistencyPredicate playsRole domainConsistencyPredicate;
+	consistencyPredicates.DomainDependenceRecord playsRole domainDependenceRecords {
 		multiplicity*;
 	}
 }
 
-relation KnownConsistencyPredicateInconsistentDependenceRecords {
-	consistencyPredicates.KnownConsistencyPredicate playsRole inconsistentPredicate;
-	consistencyPredicates.PersistentDependenceRecord playsRole inconsistentDependenceRecords {
+relation DomainConsistencyPredicateInconsistentDependenceRecords {
+	consistencyPredicates.DomainConsistencyPredicate playsRole inconsistentPredicate;
+	consistencyPredicates.DomainDependenceRecord playsRole inconsistentDependenceRecords {
 		multiplicity*;
 	}
 }
 
 relation DependentDomainMetaObjectOwnDependenceRecords {
-	PersistentDomainMetaObject playsRole dependentDomainMetaObject;
-	consistencyPredicates.PersistentDependenceRecord playsRole ownDependenceRecords {
+	DomainMetaObject playsRole dependentDomainMetaObject;
+	consistencyPredicates.DomainDependenceRecord playsRole ownDependenceRecords {
 		multiplicity*;
 	}
 }
 
 relation DependedDomainMetaObjectsDependingDependenceRecords {
-	PersistentDomainMetaObject playsRole dependedDomainMetaObjects {
+	DomainMetaObject playsRole dependedDomainMetaObjects {
 		multiplicity*;
 	}
-	consistencyPredicates.PersistentDependenceRecord playsRole dependingDependenceRecords {
+	consistencyPredicates.DomainDependenceRecord playsRole dependingDependenceRecords {
 		multiplicity*;
 	}
 }
 
-relation PersistentDomainMetaObjectAbstractDomainObject {
+relation DomainMetaObjectAbstractDomainObject {
 	AbstractDomainObject playsRole domainObject;
-	PersistentDomainMetaObject playsRole;
+	DomainMetaObject playsRole;
 }

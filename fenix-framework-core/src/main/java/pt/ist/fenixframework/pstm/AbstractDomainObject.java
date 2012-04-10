@@ -11,13 +11,13 @@ import org.apache.ojb.broker.metadata.ClassDescriptor;
 
 import pt.ist.fenixframework.DomainObject;
 import pt.ist.fenixframework.FenixFramework;
-import pt.ist.fenixframework.pstm.consistencyPredicates.CannotUseConsistencyPredicates;
+import pt.ist.fenixframework.pstm.consistencyPredicates.NoDomainMetaData;
 
 public abstract class AbstractDomainObject implements DomainObject, dml.runtime.FenixDomainObject, Serializable {
     // this should be final, but the ensureIdInternal method prevents it
     private long oid;
 
-    private VBox<PersistentDomainMetaObject> metaObject;
+    private VBox<DomainMetaObject> metaObject;
 
     public class UnableToDetermineIdException extends RuntimeException {
 	public UnableToDetermineIdException(Throwable cause) {
@@ -36,11 +36,11 @@ public abstract class AbstractDomainObject implements DomainObject, dml.runtime.
 
 	initMetaObject(false);
 
-	if (!getClass().isAnnotationPresent(CannotUseConsistencyPredicates.class)) {
-	    PersistentDomainMetaObject metaObject = new PersistentDomainMetaObject();
+	if (!getClass().isAnnotationPresent(NoDomainMetaData.class)) {
+	    DomainMetaObject metaObject = new DomainMetaObject();
 	    metaObject.setDomainObject(this);
 
-	    getPersistentMetaClass().addExistingPersistentDomainMetaObjects(getMetaObject());
+	    getPersistentMetaClass().addExistingDomainMetaObjects(getMetaObject());
 	}
     }
 
@@ -177,15 +177,15 @@ public abstract class AbstractDomainObject implements DomainObject, dml.runtime.
 	return null;
     }
 
-    public PersistentDomainMetaObject getMetaObject() {
+    public DomainMetaObject getMetaObject() {
 	return metaObject.get(this, "metaObject");
     }
 
-    public void justSetMetaObject(PersistentDomainMetaObject persistentMetaObject) {
+    public void justSetMetaObject(DomainMetaObject persistentMetaObject) {
 	metaObject.put(this, "metaObject", persistentMetaObject);
     }
 
-    private void setMetaObject(PersistentDomainMetaObject persistentMetaObject) {
+    private void setMetaObject(DomainMetaObject persistentMetaObject) {
 	persistentMetaObject.setDomainObject(this);
     }
 
@@ -214,7 +214,7 @@ public abstract class AbstractDomainObject implements DomainObject, dml.runtime.
     }
 
     protected void readMetaObjectFromResultSet(java.sql.ResultSet rs, int txNumber) throws SQLException {
-	PersistentDomainMetaObject metaObject = pt.ist.fenixframework.pstm.ResultSetReader
+	DomainMetaObject metaObject = pt.ist.fenixframework.pstm.ResultSetReader
 		.readDomainObject(rs, "OID_META_OBJECT");
 	this.metaObject.persistentLoad(metaObject, txNumber);
     }
@@ -242,8 +242,8 @@ public abstract class AbstractDomainObject implements DomainObject, dml.runtime.
 	Transaction.deleteObject(this);
     }
 
-    private PersistentDomainMetaClass getPersistentMetaClass() {
-	return PersistenceFenixFrameworkRoot.getInstance().getPersistentDomainMetaClass(this.getClass());
+    private DomainMetaClass getPersistentMetaClass() {
+	return DomainFenixFrameworkRoot.getInstance().getDomainMetaClass(this.getClass());
     }
 
     protected int getColumnIndex(final ResultSet resultSet, final String columnName, final Integer[] columnIndexes,

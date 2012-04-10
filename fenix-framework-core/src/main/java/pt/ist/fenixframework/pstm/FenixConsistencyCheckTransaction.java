@@ -51,7 +51,7 @@ public class FenixConsistencyCheckTransaction extends ReadTransaction
 
     protected Depended getDependedForBox(VBox box) {
 	AbstractDomainObject domainObject = (AbstractDomainObject) box.getOwnerObject();
-	PersistentDomainMetaObject persistentMetaObject = domainObject.getMetaObject();
+	DomainMetaObject persistentMetaObject = domainObject.getMetaObject();
 	return persistentMetaObject;
     }
 
