@@ -5,10 +5,10 @@ import java.lang.reflect.Modifier;
 import java.util.List;
 
 import pt.ist.fenixframework.pstm.AbstractDomainObject;
-import pt.ist.fenixframework.pstm.PersistentDomainMetaClass;
+import pt.ist.fenixframework.pstm.DomainMetaClass;
 
 /**
- * A PublicConsistencyPredicate is a KnownConsistencyPredicate that represents
+ * A PublicConsistencyPredicate is a DomainConsistencyPredicate that represents
  * predicate methods that are either public or protected. It can override and be
  * overridden by other PublicConsistencyPredicates.
  * 
@@ -20,17 +20,17 @@ import pt.ist.fenixframework.pstm.PersistentDomainMetaClass;
  * overridden predicate (if any) is executed for all instances of the declaring
  * domain class and subclasses that do not override the predicate method.
  **/
-@CannotUseConsistencyPredicates
+@NoDomainMetaData
 public class PublicConsistencyPredicate extends PublicConsistencyPredicate_Base {
 
     public PublicConsistencyPredicate() {
 	super();
     }
 
-    public PublicConsistencyPredicate(Method predicateMethod, PersistentDomainMetaClass metaClass) {
+    public PublicConsistencyPredicate(Method predicateMethod, DomainMetaClass metaClass) {
 	super();
 	setPredicate(predicateMethod);
-	setPersistentDomainMetaClass(metaClass);
+	setDomainMetaClass(metaClass);
 	System.out.println("[ConsistencyPredicates] Created a " + getClass().getSimpleName() + " for " + getPredicate());
     }
 
@@ -74,30 +74,30 @@ public class PublicConsistencyPredicate extends PublicConsistencyPredicate_Base 
     }
 
     @Override
-    public void initKnownConsistencyPredicateOverridden() {
+    public void initConsistencyPredicateOverridden() {
 	checkFrameworkNotInitialized();
 	PublicConsistencyPredicate overriddenPredicate = findOverriddenPredicate();
 	if (overriddenPredicate == null) {
 	    return;
 	}
 
-	overriddenPredicate.removePersistentDependenceRecordsForMetaClassAndSubclasses(getPersistentDomainMetaClass());
+	overriddenPredicate.removeDomainDependenceRecordsForMetaClassAndSubclasses(getDomainMetaClass());
 	setPublicConsistencyPredicateOverridden(overriddenPredicate);
 
 	System.out.println("[ConsistencyPredicates] Initializing overridden predicate of " + getPredicate() + " to "
 		+ overriddenPredicate.getPredicate());
     }
 
-    private void removePersistentDependenceRecordsForMetaClassAndSubclasses(PersistentDomainMetaClass metaClass) {
-	removePersistentDependenceRecordsForExistingDomainObjects(metaClass.getExistingDomainObjects());
+    private void removeDomainDependenceRecordsForMetaClassAndSubclasses(DomainMetaClass metaClass) {
+	removeDomainDependenceRecordsForExistingDomainObjects(metaClass.getExistingDomainObjects());
 
-	for (PersistentDomainMetaClass metaSubclass : metaClass.getPersistentDomainMetaSubclasses()) {
-	    removePersistentDependenceRecordsForMetaClassAndSubclasses(metaSubclass);
+	for (DomainMetaClass metaSubclass : metaClass.getDomainMetaSubclasses()) {
+	    removeDomainDependenceRecordsForMetaClassAndSubclasses(metaSubclass);
 	}
     }
 
-    private void removePersistentDependenceRecordsForExistingDomainObjects(List<AbstractDomainObject> existingObjects) {
-	for (PersistentDependenceRecord dependenceRecord : getPersistentDependenceRecords()) {
+    private void removeDomainDependenceRecordsForExistingDomainObjects(List<AbstractDomainObject> existingObjects) {
+	for (DomainDependenceRecord dependenceRecord : getDomainDependenceRecords()) {
 	    if (existingObjects.contains(dependenceRecord.getDependent())) {
 		dependenceRecord.delete();
 	    }
@@ -105,7 +105,7 @@ public class PublicConsistencyPredicate extends PublicConsistencyPredicate_Base 
     }
 
     @Override
-    public void updateKnownConsistencyPredicateOverridden() {
+    public void updateConsistencyPredicateOverridden() {
 	checkFrameworkNotInitialized();
 	PublicConsistencyPredicate overriddenPredicate = findOverriddenPredicate();
 	if (overriddenPredicate == getPublicConsistencyPredicateOverridden()) {
@@ -118,13 +118,13 @@ public class PublicConsistencyPredicate extends PublicConsistencyPredicate_Base 
     }
 
     private PublicConsistencyPredicate findOverriddenPredicate() {
-	PersistentDomainMetaClass metaSuperclass = getPersistentDomainMetaClass().getPersistentDomainMetaSuperclass();
+	DomainMetaClass metaSuperclass = getDomainMetaClass().getDomainMetaSuperclass();
 	while (metaSuperclass != null) {
 	    Method overriddenMethod = null;
 	    try {
 		overriddenMethod = metaSuperclass.getDomainClass().getDeclaredMethod(getPredicate().getName());
 	    } catch (NoSuchMethodException e) {
-		metaSuperclass = metaSuperclass.getPersistentDomainMetaSuperclass();
+		metaSuperclass = metaSuperclass.getDomainMetaSuperclass();
 		continue;
 	    }
 	    if (!overriddenMethod.isAnnotationPresent(ConsistencyPredicate.class)
@@ -135,14 +135,14 @@ public class PublicConsistencyPredicate extends PublicConsistencyPredicate_Base 
 		return null;
 	    }
 
-	    return KnownConsistencyPredicate.readKnownConsistencyPredicate(overriddenMethod);
+	    return DomainConsistencyPredicate.readDomainConsistencyPredicate(overriddenMethod);
 	}
 	return null;
     }
 
     @Override
-    public void executeConsistencyPredicateForMetaClassAndSubclasses(PersistentDomainMetaClass metaClass) {
-	if (metaClass == getPersistentDomainMetaClass()) {
+    public void executeConsistencyPredicateForMetaClassAndSubclasses(DomainMetaClass metaClass) {
+	if (metaClass == getDomainMetaClass()) {
 	    // The metaClass is this very predicate's declaring class, so it is not a subclass yet.
 	    executeConsistencyPredicateForExistingDomainObjects(metaClass.getExistingDomainObjects());
 	} else {
@@ -156,7 +156,7 @@ public class PublicConsistencyPredicate extends PublicConsistencyPredicate_Base 
 	    }
 	}
 
-	for (PersistentDomainMetaClass metaSubclass : metaClass.getPersistentDomainMetaSubclasses()) {
+	for (DomainMetaClass metaSubclass : metaClass.getDomainMetaSubclasses()) {
 	    executeConsistencyPredicateForMetaClassAndSubclasses(metaSubclass);
 	}
     }
@@ -165,7 +165,7 @@ public class PublicConsistencyPredicate extends PublicConsistencyPredicate_Base 
     public void delete() {
 	PublicConsistencyPredicate overriddenPredicate = getPublicConsistencyPredicateOverridden();
 	if (overriddenPredicate != null) {
-	    overriddenPredicate.executeConsistencyPredicateForMetaClassAndSubclasses(getPersistentDomainMetaClass());
+	    overriddenPredicate.executeConsistencyPredicateForMetaClassAndSubclasses(getDomainMetaClass());
 
 	    for (PublicConsistencyPredicate predicatesOverriding : getPublicConsistencyPredicatesOverriding()) {
 		predicatesOverriding.setPublicConsistencyPredicateOverridden(overriddenPredicate);

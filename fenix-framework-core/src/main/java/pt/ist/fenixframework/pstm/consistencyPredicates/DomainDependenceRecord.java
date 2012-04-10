@@ -7,35 +7,35 @@ import java.util.Set;
 import jvstm.cps.Depended;
 import jvstm.cps.DependenceRecord;
 import pt.ist.fenixframework.pstm.AbstractDomainObject;
-import pt.ist.fenixframework.pstm.PersistentDomainMetaObject;
+import pt.ist.fenixframework.pstm.DomainMetaObject;
 
 /**
- * A PersistentDependenceRecord represents the result of the execution of a
+ * A DomainDependenceRecord represents the result of the execution of a
  * ConsistencyPredicate method for one domainObject instance. The
- * PersistentDependenceRecord has a collection of PersistentDomainMetaObjects,
- * that represent the domainObjects read to execute the ConsistencyPredicate.
+ * DomainDependenceRecord has a collection of DomainMetaObjects, that represent
+ * the domainObjects read to execute the ConsistencyPredicate.
  **/
-@CannotUseConsistencyPredicates
-public class PersistentDependenceRecord extends PersistentDependenceRecord_Base implements
-	DependenceRecord<PersistentDomainMetaObject> {
+@NoDomainMetaData
+public class DomainDependenceRecord extends DomainDependenceRecord_Base implements
+	DependenceRecord<DomainMetaObject> {
 
-    public PersistentDependenceRecord(Object dependent, KnownConsistencyPredicate predicate, Set<Depended> depended,
+    public DomainDependenceRecord(Object dependent, DomainConsistencyPredicate predicate, Set<Depended> depended,
 	    boolean consistent) {
 	super();
 	setDependentDomainMetaObject(((AbstractDomainObject) dependent).getMetaObject());
-	setKnownConsistencyPredicate(predicate);
-	for (Depended<PersistentDependenceRecord> dependedMetaObject : depended) {
-	    addDependedDomainMetaObjects((PersistentDomainMetaObject) dependedMetaObject);
+	setDomainConsistencyPredicate(predicate);
+	for (Depended<DomainDependenceRecord> dependedMetaObject : depended) {
+	    addDependedDomainMetaObjects((DomainMetaObject) dependedMetaObject);
 	}
 	setConsistent(consistent);
     }
 
-    public PersistentDependenceRecord(Object dependent, Method predicate, Set<Depended> depended, boolean consistent) {
+    public DomainDependenceRecord(Object dependent, Method predicate, Set<Depended> depended, boolean consistent) {
 	super();
 	setDependentDomainMetaObject(((AbstractDomainObject) dependent).getMetaObject());
 	setPredicate(predicate);
-	for (Depended<PersistentDependenceRecord> dependedMetaObject : depended) {
-	    addDependedDomainMetaObjects((PersistentDomainMetaObject) dependedMetaObject);
+	for (Depended<DomainDependenceRecord> dependedMetaObject : depended) {
+	    addDependedDomainMetaObjects((DomainMetaObject) dependedMetaObject);
 	}
 	setConsistent(consistent);
     }
@@ -45,12 +45,12 @@ public class PersistentDependenceRecord extends PersistentDependenceRecord_Base 
 	if (consistent) {
 	    if ((getConsistent() != null) && !isConsistent()) {
 		// Setting to consistent after being inconsistent
-		getKnownConsistencyPredicate().removeInconsistentDependenceRecords(this);
+		getDomainConsistencyPredicate().removeInconsistentDependenceRecords(this);
 	    }
 	} else {
 	    if ((getConsistent() == null) || isConsistent()) {
 		// Setting to inconsistent after being consistent, or for the first time
-		getKnownConsistencyPredicate().addInconsistentDependenceRecords(this);
+		getDomainConsistencyPredicate().addInconsistentDependenceRecords(this);
 	    }
 	}
 	super.setConsistent(consistent);
@@ -70,13 +70,13 @@ public class PersistentDependenceRecord extends PersistentDependenceRecord_Base 
      * only remove the link to all the metaObjects, which are not deleted.
      **/
     public void delete() {
-	for (PersistentDomainMetaObject dependedMetaObject : getDependedDomainMetaObjects()) {
+	for (DomainMetaObject dependedMetaObject : getDependedDomainMetaObjects()) {
 	    removeDependedDomainMetaObjects(dependedMetaObject);
 	}
 	if (!isConsistent()) {
-	    getKnownConsistencyPredicate().removeInconsistentDependenceRecords(this);
+	    getDomainConsistencyPredicate().removeInconsistentDependenceRecords(this);
 	}
-	removeKnownConsistencyPredicate();
+	removeDomainConsistencyPredicate();
 	removeDependentDomainMetaObject();
 
 	//Deletes THIS DependenceRecord, which is also a Fenix-Framework DomainObject
@@ -85,12 +85,12 @@ public class PersistentDependenceRecord extends PersistentDependenceRecord_Base 
 
     // DependenceRecord interface implemented below:
     @Override
-    public void addDepended(PersistentDomainMetaObject dependedMetaObject) {
+    public void addDepended(DomainMetaObject dependedMetaObject) {
 	addDependedDomainMetaObjects(dependedMetaObject);
     }
 
     @Override
-    public Iterator<PersistentDomainMetaObject> getDepended() {
+    public Iterator<DomainMetaObject> getDepended() {
 	return getDependedDomainMetaObjectsIterator();
     }
 
@@ -104,11 +104,11 @@ public class PersistentDependenceRecord extends PersistentDependenceRecord_Base 
     }
 
     public void setPredicate(Method predicateMethod) {
-	setKnownConsistencyPredicate(KnownConsistencyPredicate.readKnownConsistencyPredicate(predicateMethod));
+	setDomainConsistencyPredicate(DomainConsistencyPredicate.readDomainConsistencyPredicate(predicateMethod));
     }
 
     @Override
     public Method getPredicate() {
-	return getKnownConsistencyPredicate().getPredicate();
+	return getDomainConsistencyPredicate().getPredicate();
     }
 }

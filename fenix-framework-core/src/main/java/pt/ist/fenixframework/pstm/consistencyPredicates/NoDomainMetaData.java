@@ -8,11 +8,11 @@ import java.lang.annotation.Target;
 /**
  * THIS ANNOTATION IS FOR INTERNAL USE OF THE FENIX-FRAMEWORK ONLY.
  * 
- * Annotates a class that cannot define any consistency predicates. The
- * framework will not create meta classes or meta objects for domain classes
- * with this annotation.
+ * Annotates a domain class that is not supposed to have any domain meta data.
+ * The framework will not create meta classes or meta objects for domain classes
+ * with this annotation. The class cannot define any consistency predicates.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface CannotUseConsistencyPredicates {
+public @interface NoDomainMetaData {
 }

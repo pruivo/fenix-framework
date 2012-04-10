@@ -2,8 +2,8 @@ package pt.ist.fenixframework;
 
 import jvstm.TransactionalCommand;
 import pt.ist.fenixframework.pstm.DataAccessPatterns;
+import pt.ist.fenixframework.pstm.DomainFenixFrameworkRoot;
 import pt.ist.fenixframework.pstm.MetadataManager;
-import pt.ist.fenixframework.pstm.PersistenceFenixFrameworkRoot;
 import pt.ist.fenixframework.pstm.PersistentRoot;
 import pt.ist.fenixframework.pstm.Transaction;
 import pt.ist.fenixframework.pstm.repository.RepositoryBootstrap;
@@ -23,7 +23,7 @@ import dml.DomainModel;
  */
 public class FenixFramework {
 
-    private static final String PERSISTENCE_FENIX_FRAMEWORK_ROOT_KEY = "PersistenceFenixFrameworkRoot";
+    private static final String DOMAIN_FENIX_FRAMEWORK_ROOT_KEY = "DomainFenixFrameworkRoot";
     private static final Object INIT_LOCK = new Object();
     private static boolean bootstrapped = false;
     private static boolean initialized = false;
@@ -83,22 +83,22 @@ public class FenixFramework {
 	Transaction.withTransaction(new TransactionalCommand() {
 	    @Override
 	    public void doIt() {
-		if (getPersistenceFenixFrameworkRoot() == null) {
+		if (getDomainFenixFrameworkRoot() == null) {
 		    try {
-			PersistenceFenixFrameworkRoot fenixFrameworkRoot = new PersistenceFenixFrameworkRoot();
-			PersistentRoot.addRoot(PERSISTENCE_FENIX_FRAMEWORK_ROOT_KEY, fenixFrameworkRoot);
+			DomainFenixFrameworkRoot fenixFrameworkRoot = new DomainFenixFrameworkRoot();
+			PersistentRoot.addRoot(DOMAIN_FENIX_FRAMEWORK_ROOT_KEY, fenixFrameworkRoot);
 		    } catch (Exception exc) {
 			throw new Error(exc);
 		    }
 		}
 
-		getPersistenceFenixFrameworkRoot().initialize(getDomainModel());
+		getDomainFenixFrameworkRoot().initialize(getDomainModel());
 	    }
 	});
     }
 
-    public static PersistenceFenixFrameworkRoot getPersistenceFenixFrameworkRoot() {
-	return PersistentRoot.getRoot(PERSISTENCE_FENIX_FRAMEWORK_ROOT_KEY);
+    public static DomainFenixFrameworkRoot getDomainFenixFrameworkRoot() {
+	return PersistentRoot.getRoot(DOMAIN_FENIX_FRAMEWORK_ROOT_KEY);
     }
 
     public static Config getConfig() {

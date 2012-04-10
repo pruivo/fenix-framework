@@ -11,57 +11,57 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import pt.ist.fenixframework.FenixFramework;
-import pt.ist.fenixframework.pstm.consistencyPredicates.CannotUseConsistencyPredicates;
 import pt.ist.fenixframework.pstm.consistencyPredicates.ConsistencyPredicate;
-import pt.ist.fenixframework.pstm.consistencyPredicates.KnownConsistencyPredicate;
+import pt.ist.fenixframework.pstm.consistencyPredicates.DomainConsistencyPredicate;
+import pt.ist.fenixframework.pstm.consistencyPredicates.NoDomainMetaData;
 import dml.DomainClass;
 import dml.DomainModel;
 
 /**
- * The PersistenceFenixFrameworkRoot is a singleton root object that is related
- * to all the PresistentDomainMetaClasses in the system.
+ * The DomainFenixFrameworkRoot is a singleton root object that is related to
+ * all the DomainMetaClasses in the system.
  * 
  * The initialize method is called during the initialization of the
  * FenixFramework. This method is responsible for the initialization of the
- * PersistentDomainMetaClasses, and the KnownConsistencyPredicates. It creates
- * the persistent versions of new domain Classes and predicates that have been
+ * DomainMetaClasses, and the DomainConsistencyPredicates. It creates the
+ * persistent versions of new domain classes and predicates that have been
  * detected in the code, and deletes old ones that have been removed.
  **/
-@CannotUseConsistencyPredicates
-public class PersistenceFenixFrameworkRoot extends PersistenceFenixFrameworkRoot_Base {
+@NoDomainMetaData
+public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 
     private static Map<Class<? extends AbstractDomainObject>, DomainClass> existingDMLDomainClasses;
-    private static final Map<Class<? extends AbstractDomainObject>, PersistentDomainMetaClass> existingPersistentDomainMetaClasses = new HashMap<Class<? extends AbstractDomainObject>, PersistentDomainMetaClass>();
+    private static final Map<Class<? extends AbstractDomainObject>, DomainMetaClass> existingDomainMetaClasses = new HashMap<Class<? extends AbstractDomainObject>, DomainMetaClass>();
 
-    public static PersistenceFenixFrameworkRoot getInstance() {
-	return FenixFramework.getPersistenceFenixFrameworkRoot();
+    public static DomainFenixFrameworkRoot getInstance() {
+	return FenixFramework.getDomainFenixFrameworkRoot();
     }
 
-    public PersistenceFenixFrameworkRoot() {
+    public DomainFenixFrameworkRoot() {
 	super();
 	checkIfIsSingleton();
     }
 
     private void checkIfIsSingleton() {
-	if (FenixFramework.getPersistenceFenixFrameworkRoot() != null
-		&& FenixFramework.getPersistenceFenixFrameworkRoot() != this) {
+	if (FenixFramework.getDomainFenixFrameworkRoot() != null
+		&& FenixFramework.getDomainFenixFrameworkRoot() != this) {
 	    throw new Error("There can be only one instance of " + getClass().getSimpleName());
 	}
     }
 
-    public PersistentDomainMetaClass getPersistentDomainMetaClass(Class<? extends AbstractDomainObject> domainClass) {
-	return existingPersistentDomainMetaClasses.get(domainClass);
+    public DomainMetaClass getDomainMetaClass(Class<? extends AbstractDomainObject> domainClass) {
+	return existingDomainMetaClasses.get(domainClass);
     }
 
     @Override
-    public void removePersistentDomainMetaClasses(PersistentDomainMetaClass metaClass) {
+    public void removeDomainMetaClasses(DomainMetaClass metaClass) {
 	checkFrameworkNotInitialized();
 	Class<? extends AbstractDomainObject> domainClass = metaClass.getDomainClass();
 	if (domainClass != null) {
-	    existingPersistentDomainMetaClasses.remove(metaClass.getDomainClass());
-	    existingPersistentDomainMetaClasses.remove(metaClass.getDomainClass().getSuperclass());
+	    existingDomainMetaClasses.remove(metaClass.getDomainClass());
+	    existingDomainMetaClasses.remove(metaClass.getDomainClass().getSuperclass());
 	}
-	super.removePersistentDomainMetaClasses(metaClass);
+	super.removeDomainMetaClasses(metaClass);
     }
 
     private void checkFrameworkNotInitialized() {
@@ -72,35 +72,35 @@ public class PersistenceFenixFrameworkRoot extends PersistenceFenixFrameworkRoot
     }
 
     @Override
-    public void addPersistentDomainMetaClasses(PersistentDomainMetaClass metaClass) {
+    public void addDomainMetaClasses(DomainMetaClass metaClass) {
 	checkFrameworkNotInitialized();
-	existingPersistentDomainMetaClasses.put(metaClass.getDomainClass(), metaClass);
+	existingDomainMetaClasses.put(metaClass.getDomainClass(), metaClass);
 	// The metaClass for the base class is the same as the regular domain class
-	existingPersistentDomainMetaClasses.put((Class<? extends AbstractDomainObject>) metaClass.getDomainClass()
-		.getSuperclass(), metaClass);
-	super.addPersistentDomainMetaClasses(metaClass);
+	existingDomainMetaClasses.put((Class<? extends AbstractDomainObject>) metaClass.getDomainClass().getSuperclass(),
+		metaClass);
+	super.addDomainMetaClasses(metaClass);
     }
 
     // Init methods called during the FenixFramework init
     public void initialize(DomainModel domainModel) {
 	checkFrameworkNotInitialized();
-	initializePersistentDomainMetaClasses(domainModel);
-	initializeKnownConsistencyPredicates();
+	initializeDomainMetaClasses(domainModel);
+	initializeDomainConsistencyPredicates();
     }
 
-    // Init methods for PersistentDomainMetaClasses
-    private void initializePersistentDomainMetaClasses(DomainModel domainModel) {
+    // Init methods for DomainMetaClasses
+    private void initializeDomainMetaClasses(DomainModel domainModel) {
 	existingDMLDomainClasses = getExistingDomainClasses(domainModel);
-	Set<PersistentDomainMetaClass> oldMetaClassesToRemove = new HashSet<PersistentDomainMetaClass>();
+	Set<DomainMetaClass> oldMetaClassesToRemove = new HashSet<DomainMetaClass>();
 
-	for (PersistentDomainMetaClass metaClass : getPersistentDomainMetaClasses()) {
+	for (DomainMetaClass metaClass : getDomainMetaClasses()) {
 	    Class<? extends AbstractDomainObject> domainClass = metaClass.getDomainClass();
 	    if ((domainClass == null) || (!existingDMLDomainClasses.keySet().contains(domainClass))) {
 		oldMetaClassesToRemove.add(metaClass);
 	    } else {
-		existingPersistentDomainMetaClasses.put(domainClass, metaClass);
+		existingDomainMetaClasses.put(domainClass, metaClass);
 		//The base class has the same meta class as the regular domain class.
-		existingPersistentDomainMetaClasses.put((Class<? extends AbstractDomainObject>) domainClass.getSuperclass(),
+		existingDomainMetaClasses.put((Class<? extends AbstractDomainObject>) domainClass.getSuperclass(),
 			metaClass);
 	    }
 	}
@@ -109,16 +109,16 @@ public class PersistenceFenixFrameworkRoot extends PersistenceFenixFrameworkRoot
 	    processOldClasses(oldMetaClassesToRemove);
 	}
 
-	Set<PersistentDomainMetaClass> existingMetaClassesToUpdate = new TreeSet<PersistentDomainMetaClass>(
-		PersistentDomainMetaClass.COMPARATOR_BY_CLASS_HIERARCHY_TOP_DOWN);
-	existingMetaClassesToUpdate.addAll(existingPersistentDomainMetaClasses.values());
+	Set<DomainMetaClass> existingMetaClassesToUpdate = new TreeSet<DomainMetaClass>(
+		DomainMetaClass.COMPARATOR_BY_CLASS_HIERARCHY_TOP_DOWN);
+	existingMetaClassesToUpdate.addAll(existingDomainMetaClasses.values());
 	if (!existingMetaClassesToUpdate.isEmpty()) {
 	    processExistingMetaClasses(existingMetaClassesToUpdate);
 	}
 
 	Set<Class<? extends AbstractDomainObject>> newClassesToAdd = new HashSet<Class<? extends AbstractDomainObject>>(
 		existingDMLDomainClasses.keySet());
-	newClassesToAdd.removeAll(existingPersistentDomainMetaClasses.keySet());
+	newClassesToAdd.removeAll(existingDomainMetaClasses.keySet());
 	if (!newClassesToAdd.isEmpty()) {
 	    processNewClasses(newClassesToAdd);
 	}
@@ -133,7 +133,7 @@ public class PersistenceFenixFrameworkRoot extends PersistenceFenixFrameworkRoot
 		Class<? extends AbstractDomainObject> domainClass = (Class<? extends AbstractDomainObject>) Class
 			.forName(dmlDomainClass.getFullName());
 
-		if (!domainClass.isAnnotationPresent(CannotUseConsistencyPredicates.class)) {
+		if (!domainClass.isAnnotationPresent(NoDomainMetaData.class)) {
 		    existingDomainClasses.put(domainClass, dmlDomainClass);
 		}
 	    }
@@ -144,34 +144,34 @@ public class PersistenceFenixFrameworkRoot extends PersistenceFenixFrameworkRoot
 	}
     }
 
-    private void processOldClasses(Collection<PersistentDomainMetaClass> oldMetaClassesToRemove) {
+    private void processOldClasses(Collection<DomainMetaClass> oldMetaClassesToRemove) {
 	deleteOldMetaClasses(oldMetaClassesToRemove);
     }
 
-    private void deleteOldMetaClasses(Collection<PersistentDomainMetaClass> oldMetaClassesToRemove) {
-	for (PersistentDomainMetaClass metaClass : oldMetaClassesToRemove) {
+    private void deleteOldMetaClasses(Collection<DomainMetaClass> oldMetaClassesToRemove) {
+	for (DomainMetaClass metaClass : oldMetaClassesToRemove) {
 	    metaClass.delete();
 	}
     }
 
-    private void processExistingMetaClasses(Collection<PersistentDomainMetaClass> existingMetaClassesToUpdate) {
+    private void processExistingMetaClasses(Collection<DomainMetaClass> existingMetaClassesToUpdate) {
 	updateExistingMetaClasses(existingMetaClassesToUpdate);
     }
 
-    private void updateExistingMetaClasses(Collection<PersistentDomainMetaClass> existingMetaClassesToUpdate) {
-	for (PersistentDomainMetaClass metaClass : existingMetaClassesToUpdate) {
-	    if (!metaClass.hasPersistentDomainMetaSuperclass()) {
+    private void updateExistingMetaClasses(Collection<DomainMetaClass> existingMetaClassesToUpdate) {
+	for (DomainMetaClass metaClass : existingMetaClassesToUpdate) {
+	    if (!metaClass.hasDomainMetaSuperclass()) {
 		if (hasSuperclassInDML(metaClass)) {
 		    System.out.println("[MetaClasses] MetaClass " + metaClass.getDomainClass().getSimpleName()
 			    + " (and subclasses') hierarchy has changed...");
 		    metaClass.delete();
 		}
 	    } else {
-		PersistentDomainMetaClass currentMetaSuperclass = null;
+		DomainMetaClass currentMetaSuperclass = null;
 		if (hasSuperclassInDML(metaClass)) {
-		    currentMetaSuperclass = getPersistentDomainMetaSuperclassFromDML(metaClass);
+		    currentMetaSuperclass = getDomainMetaSuperclassFromDML(metaClass);
 		}
-		if (currentMetaSuperclass != metaClass.getPersistentDomainMetaSuperclass()) {
+		if (currentMetaSuperclass != metaClass.getDomainMetaSuperclass()) {
 		    System.out.println("[MetaClasses] MetaClass " + metaClass.getDomainClass().getSimpleName()
 			    + " (and subclasses') hierarchy has changed...");
 		    metaClass.delete();
@@ -180,18 +180,18 @@ public class PersistenceFenixFrameworkRoot extends PersistenceFenixFrameworkRoot
 	}
     }
 
-    private boolean hasSuperclassInDML(PersistentDomainMetaClass metaClass) {
+    private boolean hasSuperclassInDML(DomainMetaClass metaClass) {
 	DomainClass dmlDomainSuperclass = (DomainClass) existingDMLDomainClasses.get(metaClass.getDomainClass()).getSuperclass();
 	return (dmlDomainSuperclass != null);
     }
 
-    private PersistentDomainMetaClass getPersistentDomainMetaSuperclassFromDML(PersistentDomainMetaClass metaClass) {
+    private DomainMetaClass getDomainMetaSuperclassFromDML(DomainMetaClass metaClass) {
 	try {
 	    DomainClass dmlDomainSuperclass = (DomainClass) existingDMLDomainClasses.get(metaClass.getDomainClass())
 		    .getSuperclass();
 	    Class<? extends AbstractDomainObject> domainSuperclass = (Class<? extends AbstractDomainObject>) Class
 		    .forName(dmlDomainSuperclass.getFullName());
-	    return existingPersistentDomainMetaClasses.get(domainSuperclass);
+	    return existingDomainMetaClasses.get(domainSuperclass);
 	} catch (ClassNotFoundException e) {
 	    e.printStackTrace();
 	    throw new Error(e);
@@ -203,48 +203,48 @@ public class PersistenceFenixFrameworkRoot extends PersistenceFenixFrameworkRoot
     }
 
     private void createNewMetaClasses(Collection<Class<? extends AbstractDomainObject>> newClassesToAdd) {
-	Set<PersistentDomainMetaClass> createdMetaClasses = new HashSet<PersistentDomainMetaClass>();
+	Set<DomainMetaClass> createdMetaClasses = new HashSet<DomainMetaClass>();
 	for (Class<? extends AbstractDomainObject> domainClass : newClassesToAdd) {
-	    PersistentDomainMetaClass newPersistentDomainMetaClass = new PersistentDomainMetaClass(domainClass);
-	    createdMetaClasses.add(newPersistentDomainMetaClass);
+	    DomainMetaClass newDomainMetaClass = new DomainMetaClass(domainClass);
+	    createdMetaClasses.add(newDomainMetaClass);
 	}
 
-	for (PersistentDomainMetaClass metaClass : createdMetaClasses) {
+	for (DomainMetaClass metaClass : createdMetaClasses) {
 	    metaClass.initExistingDomainObjects();
 	    if (hasSuperclassInDML(metaClass)) {
-		metaClass.initPersistentDomainMetaSuperclass(getPersistentDomainMetaSuperclassFromDML(metaClass));
+		metaClass.initDomainMetaSuperclass(getDomainMetaSuperclassFromDML(metaClass));
 	    }
 	}
     }
 
-    // End of init methods for PersistentDomainMetaClasses
+    // End of init methods for DomainMetaClasses
 
-    // Init methods for KnownConsistencyPredicates
-    private void initializeKnownConsistencyPredicates() {
+    // Init methods for DomainConsistencyPredicates
+    private void initializeDomainConsistencyPredicates() {
 	Set<Method> newPredicatesToAdd = new HashSet<Method>();
-	Set<KnownConsistencyPredicate> oldPredicatesToRemove = new HashSet<KnownConsistencyPredicate>();
-	Map<Method, KnownConsistencyPredicate> existingKnownPredicates = new HashMap<Method, KnownConsistencyPredicate>();
+	Set<DomainConsistencyPredicate> oldPredicatesToRemove = new HashSet<DomainConsistencyPredicate>();
+	Map<Method, DomainConsistencyPredicate> existingDomainPredicates = new HashMap<Method, DomainConsistencyPredicate>();
 
-	Set<PersistentDomainMetaClass> existingMetaClassesSorted = new TreeSet<PersistentDomainMetaClass>(
-		PersistentDomainMetaClass.COMPARATOR_BY_CLASS_HIERARCHY_TOP_DOWN);
-	existingMetaClassesSorted.addAll(existingPersistentDomainMetaClasses.values());
-	for (PersistentDomainMetaClass metaClass : existingMetaClassesSorted) {
+	Set<DomainMetaClass> existingMetaClassesSorted = new TreeSet<DomainMetaClass>(
+		DomainMetaClass.COMPARATOR_BY_CLASS_HIERARCHY_TOP_DOWN);
+	existingMetaClassesSorted.addAll(existingDomainMetaClasses.values());
+	for (DomainMetaClass metaClass : existingMetaClassesSorted) {
 
 	    Set<Method> existingPredicates = getDeclaredConsistencyPredicateMethods(metaClass);
 
-	    for (KnownConsistencyPredicate declaredConsistencyPredicate : metaClass.getDeclaredConsistencyPredicates()) {
+	    for (DomainConsistencyPredicate declaredConsistencyPredicate : metaClass.getDeclaredConsistencyPredicates()) {
 		Method predicateMethod = declaredConsistencyPredicate.getPredicate();
 		if ((predicateMethod == null)
 			|| (!predicateMethod.isAnnotationPresent(ConsistencyPredicate.class) && !predicateMethod
 				.isAnnotationPresent(jvstm.cps.ConsistencyPredicate.class))) {
 		    oldPredicatesToRemove.add(declaredConsistencyPredicate);
 		} else {
-		    existingKnownPredicates.put(declaredConsistencyPredicate.getPredicate(), declaredConsistencyPredicate);
+		    existingDomainPredicates.put(declaredConsistencyPredicate.getPredicate(), declaredConsistencyPredicate);
 		}
 	    }
 
 	    newPredicatesToAdd.addAll(existingPredicates);
-	    newPredicatesToAdd.removeAll(existingKnownPredicates.keySet());
+	    newPredicatesToAdd.removeAll(existingDomainPredicates.keySet());
 
 	    if (!newPredicatesToAdd.isEmpty()) {
 		processNewPredicates(newPredicatesToAdd, metaClass);
@@ -254,14 +254,14 @@ public class PersistenceFenixFrameworkRoot extends PersistenceFenixFrameworkRoot
 		processOldPredicates(oldPredicatesToRemove, metaClass);
 		oldPredicatesToRemove.clear();
 	    }
-	    if (!existingKnownPredicates.isEmpty()) {
-		processExistingPredicates(existingKnownPredicates.values(), metaClass);
-		existingKnownPredicates.clear();
+	    if (!existingDomainPredicates.isEmpty()) {
+		processExistingPredicates(existingDomainPredicates.values(), metaClass);
+		existingDomainPredicates.clear();
 	    }
 	}
     }
 
-    private Set<Method> getDeclaredConsistencyPredicateMethods(PersistentDomainMetaClass metaClass) {
+    private Set<Method> getDeclaredConsistencyPredicateMethods(DomainMetaClass metaClass) {
 	Class<? extends AbstractDomainObject> domainClass = metaClass.getDomainClass();
 	Class<? extends AbstractDomainObject> baseClass = (Class<? extends AbstractDomainObject>) domainClass.getSuperclass();
 	Set<Method> declaredMethods = getDeclaredConsistencyPredicateMethods(domainClass);
@@ -295,49 +295,49 @@ public class PersistenceFenixFrameworkRoot extends PersistenceFenixFrameworkRoot
 	return declaredMethods;
     }
 
-    private void processNewPredicates(Set<Method> newPredicatesToAdd, PersistentDomainMetaClass metaClass) {
+    private void processNewPredicates(Set<Method> newPredicatesToAdd, DomainMetaClass metaClass) {
 	createAndExecuteNewPredicates(newPredicatesToAdd, metaClass);
     }
 
-    private void createAndExecuteNewPredicates(Set<Method> newPredicatesToAdd, PersistentDomainMetaClass metaClass) {
-	Set<KnownConsistencyPredicate> createdPredicates = new HashSet<KnownConsistencyPredicate>();
+    private void createAndExecuteNewPredicates(Set<Method> newPredicatesToAdd, DomainMetaClass metaClass) {
+	Set<DomainConsistencyPredicate> createdPredicates = new HashSet<DomainConsistencyPredicate>();
 
 	// First, create all new predicates
 	for (Method predicateMethod : newPredicatesToAdd) {
-	    createdPredicates.add(KnownConsistencyPredicate.createNewKnownConsistencyPredicate(predicateMethod, metaClass));
+	    createdPredicates.add(DomainConsistencyPredicate.createNewDomainConsistencyPredicate(predicateMethod, metaClass));
 	}
 
 	// Second, initialize each predicate's overridden predicate
-	for (KnownConsistencyPredicate knownConsistencyPredicate : createdPredicates) {
-	    knownConsistencyPredicate.initKnownConsistencyPredicateOverridden();
+	for (DomainConsistencyPredicate knownConsistencyPredicate : createdPredicates) {
+	    knownConsistencyPredicate.initConsistencyPredicateOverridden();
 	}
 
 	// Third, execute the predicates for the affected classes
-	for (KnownConsistencyPredicate knownConsistencyPredicate : createdPredicates) {
+	for (DomainConsistencyPredicate knownConsistencyPredicate : createdPredicates) {
 	    knownConsistencyPredicate.executeConsistencyPredicateForMetaClassAndSubclasses(metaClass);
 	}
     }
 
-    private void processOldPredicates(Set<KnownConsistencyPredicate> oldPredicatesToRemove, PersistentDomainMetaClass metaClass) {
+    private void processOldPredicates(Set<DomainConsistencyPredicate> oldPredicatesToRemove, DomainMetaClass metaClass) {
 	deleteOldPredicates(oldPredicatesToRemove, metaClass);
     }
 
-    private void deleteOldPredicates(Set<KnownConsistencyPredicate> oldPredicatesToRemove, PersistentDomainMetaClass metaClass) {
-	for (KnownConsistencyPredicate knownConsistencyPredicate : oldPredicatesToRemove) {
+    private void deleteOldPredicates(Set<DomainConsistencyPredicate> oldPredicatesToRemove, DomainMetaClass metaClass) {
+	for (DomainConsistencyPredicate knownConsistencyPredicate : oldPredicatesToRemove) {
 	    knownConsistencyPredicate.delete();
 	}
     }
 
-    private void processExistingPredicates(Collection<KnownConsistencyPredicate> existingKnownPredicates,
-	    PersistentDomainMetaClass metaClass) {
+    private void processExistingPredicates(Collection<DomainConsistencyPredicate> existingKnownPredicates,
+	    DomainMetaClass metaClass) {
 	updateExistingPredicates(existingKnownPredicates, metaClass);
     }
 
-    private void updateExistingPredicates(Collection<KnownConsistencyPredicate> existingKnownPredicates,
-	    PersistentDomainMetaClass metaClass) {
-	for (KnownConsistencyPredicate knownConsistencyPredicate : existingKnownPredicates) {
-	    knownConsistencyPredicate.updateKnownConsistencyPredicateOverridden();
+    private void updateExistingPredicates(Collection<DomainConsistencyPredicate> existingKnownPredicates,
+	    DomainMetaClass metaClass) {
+	for (DomainConsistencyPredicate knownConsistencyPredicate : existingKnownPredicates) {
+	    knownConsistencyPredicate.updateConsistencyPredicateOverridden();
 	}
     }
-    // End of init methods for KnownConsistencyPredicates
+    // End of init methods for DomainConsistencyPredicates
 }
