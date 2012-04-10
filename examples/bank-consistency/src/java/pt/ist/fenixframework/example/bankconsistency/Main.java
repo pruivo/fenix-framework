@@ -5,9 +5,9 @@ import jvstm.cps.ConsistencyException;
 import pt.ist.fenixframework.Config;
 import pt.ist.fenixframework.FenixFramework;
 import pt.ist.fenixframework.example.bankconsistency.BankConsistencyApplication.DomainPrinter;
-import pt.ist.fenixframework.pstm.PersistenceFenixFrameworkRoot;
-import pt.ist.fenixframework.pstm.PersistentDomainMetaClass;
-import pt.ist.fenixframework.pstm.consistencyPredicates.KnownConsistencyPredicate;
+import pt.ist.fenixframework.pstm.DomainFenixFrameworkRoot;
+import pt.ist.fenixframework.pstm.DomainMetaClass;
+import pt.ist.fenixframework.pstm.consistencyPredicates.DomainConsistencyPredicate;
 
 public class Main {
     public static void main(final String[] args) {
@@ -65,10 +65,10 @@ public class Main {
 
     @Atomic
     private static void editFenixFrameworkDomainIllegaly() {
-	PersistentDomainMetaClass accountMetaClass = PersistenceFenixFrameworkRoot.getInstance().getPersistentDomainMetaClass(
+	DomainMetaClass accountMetaClass = DomainFenixFrameworkRoot.getInstance().getDomainMetaClass(
 		Account.class);
-	KnownConsistencyPredicate testPredicate = null;
-	for (KnownConsistencyPredicate predicate : accountMetaClass.getDeclaredConsistencyPredicates()) {
+	DomainConsistencyPredicate testPredicate = null;
+	for (DomainConsistencyPredicate predicate : accountMetaClass.getDeclaredConsistencyPredicates()) {
 	    //accountMetaClass.removeDeclaredConsistencyPredicates(predicate);
 	}
     }

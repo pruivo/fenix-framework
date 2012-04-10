@@ -2,7 +2,7 @@ package pt.ist.fenixframework.pstm.consistencyPredicates;
 
 import java.lang.reflect.Method;
 
-import pt.ist.fenixframework.pstm.PersistentDomainMetaClass;
+import pt.ist.fenixframework.pstm.DomainMetaClass;
 
 /**
  * A FinalConsistencyPredicate is a PublicConsistencyPredicate that represents
@@ -13,13 +13,13 @@ import pt.ist.fenixframework.pstm.PersistentDomainMetaClass;
  * of the new PublicConsistencyPredicate does not need to check subclasses for
  * overriding methods.
  **/
-@CannotUseConsistencyPredicates
+@NoDomainMetaData
 public class FinalConsistencyPredicate extends FinalConsistencyPredicate_Base {
 
-    public FinalConsistencyPredicate(Method predicateMethod, PersistentDomainMetaClass metaClass) {
+    public FinalConsistencyPredicate(Method predicateMethod, DomainMetaClass metaClass) {
 	super();
 	setPredicate(predicateMethod);
-	setPersistentDomainMetaClass(metaClass);
+	setDomainMetaClass(metaClass);
 	System.out.println("[ConsistencyPredicates] Created a " + getClass().getSimpleName() + " for " + getPredicate());
     }
 
@@ -29,10 +29,10 @@ public class FinalConsistencyPredicate extends FinalConsistencyPredicate_Base {
     }
 
     @Override
-    public void executeConsistencyPredicateForMetaClassAndSubclasses(PersistentDomainMetaClass metaClass) {
+    public void executeConsistencyPredicateForMetaClassAndSubclasses(DomainMetaClass metaClass) {
 	executeConsistencyPredicateForExistingDomainObjects(metaClass.getExistingDomainObjects());
 
-	for (PersistentDomainMetaClass metaSubclass : metaClass.getPersistentDomainMetaSubclasses()) {
+	for (DomainMetaClass metaSubclass : metaClass.getDomainMetaSubclasses()) {
 	    executeConsistencyPredicateForMetaClassAndSubclasses(metaSubclass);
 	}
     }

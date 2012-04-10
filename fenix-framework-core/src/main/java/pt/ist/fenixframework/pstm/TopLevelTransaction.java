@@ -31,10 +31,10 @@ import org.apache.ojb.broker.accesslayer.LookupException;
 import pt.ist.fenixframework.DomainObject;
 import pt.ist.fenixframework.TxIntrospector;
 import pt.ist.fenixframework.pstm.DBChanges.AttrChangeLog;
-import pt.ist.fenixframework.pstm.consistencyPredicates.CannotUseConsistencyPredicates;
 import pt.ist.fenixframework.pstm.consistencyPredicates.ConsistencyPredicate;
-import pt.ist.fenixframework.pstm.consistencyPredicates.KnownConsistencyPredicate;
-import pt.ist.fenixframework.pstm.consistencyPredicates.PersistentDependenceRecord;
+import pt.ist.fenixframework.pstm.consistencyPredicates.DomainConsistencyPredicate;
+import pt.ist.fenixframework.pstm.consistencyPredicates.DomainDependenceRecord;
+import pt.ist.fenixframework.pstm.consistencyPredicates.NoDomainMetaData;
 
 public class TopLevelTransaction extends ConsistentTopLevelTransaction implements FenixTransaction, TxIntrospector {
 
@@ -465,7 +465,7 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
     // check consistency predicates of a changed object
     @Override
     protected void recheckDependenceRecord(DependenceRecord dependence) {
-	PersistentDependenceRecord dependenceRecord = (PersistentDependenceRecord) dependence;
+	DomainDependenceRecord dependenceRecord = (DomainDependenceRecord) dependence;
 	Pair pair = checkPredicateForOneObject(dependenceRecord.getDependent(), dependenceRecord.getPredicate(),
 		dependenceRecord.isConsistent());
 	if (pair == null) {
@@ -497,16 +497,16 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
     // check consistency predicates of a new object
     @Override
     protected void checkConsistencyPredicates(Object newObject) {
-	if (newObject.getClass().isAnnotationPresent(CannotUseConsistencyPredicates.class)) {
+	if (newObject.getClass().isAnnotationPresent(NoDomainMetaData.class)) {
 	    return;
 	}
 	AbstractDomainObject ado = (AbstractDomainObject) newObject;
-	PersistentDomainMetaClass metaClass = ado.getMetaObject().getPersistentDomainMetaClass();
-	for (KnownConsistencyPredicate knownPredicate : metaClass.getAllConsistencyPredicates()) {
+	DomainMetaClass metaClass = ado.getMetaObject().getDomainMetaClass();
+	for (DomainConsistencyPredicate knownPredicate : metaClass.getAllConsistencyPredicates()) {
 	    Method predicate = knownPredicate.getPredicate();
 	    Pair pair = checkPredicateForOneObject(newObject, predicate, true);
 	    if (pair != null) {
-		new PersistentDependenceRecord(newObject, knownPredicate, (Set<Depended>) pair.first, (Boolean) pair.second);
+		new DomainDependenceRecord(newObject, knownPredicate, (Set<Depended>) pair.first, (Boolean) pair.second);
 	    }
 	}
     }

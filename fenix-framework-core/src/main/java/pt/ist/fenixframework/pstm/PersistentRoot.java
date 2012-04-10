@@ -3,9 +3,9 @@ package pt.ist.fenixframework.pstm;
 import jvstm.TransactionalCommand;
 import pt.ist.fenixframework.Config;
 import pt.ist.fenixframework.DomainObject;
-import pt.ist.fenixframework.pstm.consistencyPredicates.CannotUseConsistencyPredicates;
+import pt.ist.fenixframework.pstm.consistencyPredicates.NoDomainMetaData;
 
-@CannotUseConsistencyPredicates
+@NoDomainMetaData
 public class PersistentRoot extends PersistentRoot_Base {
 
     private static final String initialRootKey = "pt.ist.fenixframework.root";

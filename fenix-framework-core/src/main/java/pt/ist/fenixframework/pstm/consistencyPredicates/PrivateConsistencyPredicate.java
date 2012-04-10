@@ -2,24 +2,24 @@ package pt.ist.fenixframework.pstm.consistencyPredicates;
 
 import java.lang.reflect.Method;
 
-import pt.ist.fenixframework.pstm.PersistentDomainMetaClass;
+import pt.ist.fenixframework.pstm.DomainMetaClass;
 
 /**
- * A PrivateConsistencyPredicate is a KnownConsistencyPredicate that represents
+ * A PrivateConsistencyPredicate is a DomainConsistencyPredicate that represents
  * predicate methods that are private. It can neither override, nor be
- * overridden other KnownConsistencyPredicates.
+ * overridden other ConsistencyPredicates.
  * 
  * Therefore, on creation, the new PrivateConsistencyPredicate is executed for
  * all instances of the declaring domain class and subclasses. Likewise, on
  * deletion, all it's dependence records are removed.
  **/
-@CannotUseConsistencyPredicates
+@NoDomainMetaData
 public class PrivateConsistencyPredicate extends PrivateConsistencyPredicate_Base {
 
-    public PrivateConsistencyPredicate(Method predicateMethod, PersistentDomainMetaClass metaClass) {
+    public PrivateConsistencyPredicate(Method predicateMethod, DomainMetaClass metaClass) {
 	super();
 	setPredicate(predicateMethod);
-	setPersistentDomainMetaClass(metaClass);
+	setDomainMetaClass(metaClass);
 	System.out.println("[ConsistencyPredicates] Created a " + getClass().getSimpleName() + " for " + getPredicate());
     }
 
@@ -39,20 +39,20 @@ public class PrivateConsistencyPredicate extends PrivateConsistencyPredicate_Bas
     }
 
     @Override
-    public void initKnownConsistencyPredicateOverridden() {
+    public void initConsistencyPredicateOverridden() {
 	checkFrameworkNotInitialized();
     }
 
     @Override
-    public void updateKnownConsistencyPredicateOverridden() {
+    public void updateConsistencyPredicateOverridden() {
 	checkFrameworkNotInitialized();
     }
 
     @Override
-    public void executeConsistencyPredicateForMetaClassAndSubclasses(PersistentDomainMetaClass metaClass) {
+    public void executeConsistencyPredicateForMetaClassAndSubclasses(DomainMetaClass metaClass) {
 	executeConsistencyPredicateForExistingDomainObjects(metaClass.getExistingDomainObjects());
 
-	for (PersistentDomainMetaClass metaSubclass : metaClass.getPersistentDomainMetaSubclasses()) {
+	for (DomainMetaClass metaSubclass : metaClass.getDomainMetaSubclasses()) {
 	    executeConsistencyPredicateForMetaClassAndSubclasses(metaSubclass);
 	}
     }

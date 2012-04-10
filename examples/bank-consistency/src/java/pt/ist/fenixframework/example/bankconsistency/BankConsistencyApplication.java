@@ -8,11 +8,11 @@ import java.util.Set;
 import jvstm.cps.DependenceRecord;
 import pt.ist.fenixframework.FenixFramework;
 import pt.ist.fenixframework.pstm.AbstractDomainObject;
-import pt.ist.fenixframework.pstm.PersistenceFenixFrameworkRoot;
-import pt.ist.fenixframework.pstm.PersistentDomainMetaClass;
-import pt.ist.fenixframework.pstm.PersistentDomainMetaObject;
-import pt.ist.fenixframework.pstm.consistencyPredicates.KnownConsistencyPredicate;
-import pt.ist.fenixframework.pstm.consistencyPredicates.PersistentDependenceRecord;
+import pt.ist.fenixframework.pstm.DomainFenixFrameworkRoot;
+import pt.ist.fenixframework.pstm.DomainMetaClass;
+import pt.ist.fenixframework.pstm.DomainMetaObject;
+import pt.ist.fenixframework.pstm.consistencyPredicates.DomainConsistencyPredicate;
+import pt.ist.fenixframework.pstm.consistencyPredicates.DomainDependenceRecord;
 import pt.ist.fenixframework.pstm.consistencyPredicates.PublicConsistencyPredicate;
 
 public class BankConsistencyApplication extends BankConsistencyApplication_Base {
@@ -39,17 +39,17 @@ public class BankConsistencyApplication extends BankConsistencyApplication_Base 
 	    System.out.println();
 	    System.out
 		    .println("=========================== DOMAIN METACLASSES AND KNOWN CONSISTENCY PREDICATES ===========================");
-	    Set<PersistentDomainMetaClass> visitedMetaClasses = new HashSet<PersistentDomainMetaClass>();
-	    for (PersistentDomainMetaClass metaClass : PersistenceFenixFrameworkRoot.getInstance()
-		    .getPersistentDomainMetaClasses()) {
+	    Set<DomainMetaClass> visitedMetaClasses = new HashSet<DomainMetaClass>();
+	    for (DomainMetaClass metaClass : DomainFenixFrameworkRoot.getInstance()
+.getDomainMetaClasses()) {
 		if (visitedMetaClasses.contains(metaClass)) {
 		    continue;
 		}
 		System.out.println();
 		System.out.println();
 		System.out.println();
-		while (metaClass.getPersistentDomainMetaSuperclass() != null) {
-		    metaClass = metaClass.getPersistentDomainMetaSuperclass();
+		while (metaClass.getDomainMetaSuperclass() != null) {
+		    metaClass = metaClass.getDomainMetaSuperclass();
 		}
 		printMetaClassAndSubclasses(metaClass, visitedMetaClasses);
 	    }
@@ -103,30 +103,30 @@ public class BankConsistencyApplication extends BankConsistencyApplication_Base 
 	    }
 	}
 
-	private static void printMetaClassAndSubclasses(PersistentDomainMetaClass metaClass,
-		Set<PersistentDomainMetaClass> visitedMetaClasses) {
+	private static void printMetaClassAndSubclasses(DomainMetaClass metaClass,
+		Set<DomainMetaClass> visitedMetaClasses) {
 	    System.out.println();
 	    String classDescription = metaClass.getDomainClass().toString();
-	    PersistentDomainMetaClass metaSuperclass = metaClass.getPersistentDomainMetaSuperclass();
+	    DomainMetaClass metaSuperclass = metaClass.getDomainMetaSuperclass();
 	    if (metaSuperclass != null) {
 		classDescription += " extends ^ " + metaSuperclass.getDomainClass();
 	    }
 	    System.out.println(classDescription);
-	    System.out.println(metaClass.getExistingPersistentDomainMetaObjectsCount() + " existing objects");
+	    System.out.println(metaClass.getExistingDomainMetaObjectsCount() + " existing objects");
 	    printDeclaredKnownConsistencyPredicates(metaClass);
 	    visitedMetaClasses.add(metaClass);
 
-	    for (PersistentDomainMetaClass metaSubclass : metaClass.getPersistentDomainMetaSubclasses()) {
+	    for (DomainMetaClass metaSubclass : metaClass.getDomainMetaSubclasses()) {
 		printMetaClassAndSubclasses(metaSubclass, visitedMetaClasses);
 	    }
 	}
 
-	private static void printDeclaredKnownConsistencyPredicates(PersistentDomainMetaClass metaClass) {
+	private static void printDeclaredKnownConsistencyPredicates(DomainMetaClass metaClass) {
 	    if (metaClass.getDeclaredConsistencyPredicatesCount() == 0) {
 		return;
 	    }
 	    System.out.println("Declaring predicates: ");
-	    for (KnownConsistencyPredicate declaredConsistencyPredicate : metaClass.getDeclaredConsistencyPredicates()) {
+	    for (DomainConsistencyPredicate declaredConsistencyPredicate : metaClass.getDeclaredConsistencyPredicates()) {
 		if (declaredConsistencyPredicate.isPrivate()) {
 		    System.out.println(declaredConsistencyPredicate.getPredicate());
 		} else if (declaredConsistencyPredicate.isPublic()) {
@@ -142,16 +142,16 @@ public class BankConsistencyApplication extends BankConsistencyApplication_Base 
 	    }
 	}
 
-	private static void printAssociatedDependenceRecords(KnownConsistencyPredicate knownConsistencyPredicate) {
-	    if (knownConsistencyPredicate.getPersistentDependenceRecordsCount() == 0) {
+	private static void printAssociatedDependenceRecords(DomainConsistencyPredicate knownConsistencyPredicate) {
+	    if (knownConsistencyPredicate.getDomainDependenceRecordsCount() == 0) {
 		return;
 	    }
 	    System.out.println("Existing DependenceRecords: (all, including inconsistent)");
-	    for (PersistentDependenceRecord dependenceRecord : knownConsistencyPredicate.getPersistentDependenceRecords()) {
+	    for (DomainDependenceRecord dependenceRecord : knownConsistencyPredicate.getDomainDependenceRecords()) {
 		System.out.println("\tDependent object " + dependenceRecord.getDependent() + " is "
 			+ ((dependenceRecord.isConsistent()) ? "consistent" : "INCONSISTENT!"));
 		System.out.println("\tDepended Objects: ");
-		for (PersistentDomainMetaObject dependedObject : dependenceRecord.getDependedDomainMetaObjects()) {
+		for (DomainMetaObject dependedObject : dependenceRecord.getDependedDomainMetaObjects()) {
 		    System.out.println("\t\t" + dependedObject.getDomainObject());
 		}
 	    }
@@ -160,26 +160,26 @@ public class BankConsistencyApplication extends BankConsistencyApplication_Base 
 		return;
 	    }
 	    System.out.println("INCONSISTENT DependenceRecords: (inconsistent only)");
-	    for (PersistentDependenceRecord inconsistentDependenceRecord : knownConsistencyPredicate
+	    for (DomainDependenceRecord inconsistentDependenceRecord : knownConsistencyPredicate
 		    .getInconsistentDependenceRecords()) {
 		if (inconsistentDependenceRecord.isConsistent()) {
 		    throw new Error("A CONSISTENT DependenceRecord was found in the inconsistent DependenceRecords list of "
-			    + knownConsistencyPredicate.getPersistentDomainMetaClass().getDomainClass());
+			    + knownConsistencyPredicate.getDomainMetaClass().getDomainClass());
 		}
 		System.out.println("\tDependent object " + inconsistentDependenceRecord.getDependent() + " is INCONSISTENT!");
 		System.out.println("\tDepended Objects: ");
-		for (PersistentDomainMetaObject dependedObject : inconsistentDependenceRecord.getDependedDomainMetaObjects()) {
+		for (DomainMetaObject dependedObject : inconsistentDependenceRecord.getDependedDomainMetaObjects()) {
 		    System.out.println("\t\t" + dependedObject.getDomainObject());
 		}
 	    }
 	}
 
 	private static void printDomainObjectDependencies(AbstractDomainObject obj) {
-	    PersistentDomainMetaObject dependedMetaObject = null;
+	    DomainMetaObject dependedMetaObject = null;
 	    try {
 		Method getMetaObjectMethod = AbstractDomainObject.class.getDeclaredMethod("getMetaObject");
 		getMetaObjectMethod.setAccessible(true);
-		dependedMetaObject = (PersistentDomainMetaObject) getMetaObjectMethod.invoke(obj);
+		dependedMetaObject = (DomainMetaObject) getMetaObjectMethod.invoke(obj);
 	    } catch (SecurityException e) {
 		e.printStackTrace();
 		return;

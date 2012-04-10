@@ -10,21 +10,21 @@ import jvstm.cps.ConsistencyCheckTransaction;
 import jvstm.cps.Depended;
 import pt.ist.fenixframework.FenixFramework;
 import pt.ist.fenixframework.pstm.AbstractDomainObject;
+import pt.ist.fenixframework.pstm.DomainMetaClass;
 import pt.ist.fenixframework.pstm.FenixConsistencyCheckTransaction;
-import pt.ist.fenixframework.pstm.PersistentDomainMetaClass;
 import pt.ist.fenixframework.pstm.TopLevelTransaction.Pair;
 import pt.ist.fenixframework.pstm.Transaction;
 
 /**
- * A KnownConsistencyPredicate represents a ConsistencyPredicate method that is
+ * A DomainConsistencyPredicate represents a ConsistencyPredicate method that is
  * already known, and has previously been initialized by the system. By storing
  * which predicates are known and by detecting which predicates exist in the
  * code, we can determine which predicates are new, and which have been removed.
  **/
-@CannotUseConsistencyPredicates
-public abstract class KnownConsistencyPredicate extends KnownConsistencyPredicate_Base {
+@NoDomainMetaData
+public abstract class DomainConsistencyPredicate extends DomainConsistencyPredicate_Base {
 
-    public KnownConsistencyPredicate() {
+    public DomainConsistencyPredicate() {
 	super();
 	checkFrameworkNotInitialized();
     }
@@ -58,22 +58,22 @@ public abstract class KnownConsistencyPredicate extends KnownConsistencyPredicat
     }
 
     @Override
-    public void setPersistentDomainMetaClass(PersistentDomainMetaClass persistentDomainMetaClass) {
+    public void setDomainMetaClass(DomainMetaClass domainMetaClass) {
 	checkFrameworkNotInitialized();
-	super.setPersistentDomainMetaClass(persistentDomainMetaClass);
+	super.setDomainMetaClass(domainMetaClass);
     }
 
     @Override
-    public void removePersistentDomainMetaClass() {
+    public void removeDomainMetaClass() {
 	checkFrameworkNotInitialized();
-	super.removePersistentDomainMetaClass();
+	super.removeDomainMetaClass();
     }
 
-    public abstract void initKnownConsistencyPredicateOverridden();
+    public abstract void initConsistencyPredicateOverridden();
 
-    public abstract void updateKnownConsistencyPredicateOverridden();
+    public abstract void updateConsistencyPredicateOverridden();
 
-    public abstract void executeConsistencyPredicateForMetaClassAndSubclasses(PersistentDomainMetaClass metaClass);
+    public abstract void executeConsistencyPredicateForMetaClassAndSubclasses(DomainMetaClass metaClass);
 
     protected void executeConsistencyPredicateForExistingDomainObjects(List<AbstractDomainObject> domainObjects) {
 	checkFrameworkNotInitialized();
@@ -84,7 +84,7 @@ public abstract class KnownConsistencyPredicate extends KnownConsistencyPredicat
 	for (AbstractDomainObject existingDomainObject : domainObjects) {
 	    Pair pair = executePredicateForOneObject(existingDomainObject, getPredicate());
 	    if (pair != null) {
-		new PersistentDependenceRecord(existingDomainObject, this, (Set<Depended>) pair.first, (Boolean) pair.second);
+		new DomainDependenceRecord(existingDomainObject, this, (Set<Depended>) pair.first, (Boolean) pair.second);
 	    }
 	}
     }
@@ -109,7 +109,7 @@ public abstract class KnownConsistencyPredicate extends KnownConsistencyPredicat
     }
 
     /**
-     * A KnownConsistencyPredicate should be deleted when the
+     * A DomainConsistencyPredicate should be deleted when the
      * ConsistencyPredicate method is removed from the code, or the containing
      * class is removed. In either case, we can delete all the associated
      * DependenceRecords.
@@ -122,7 +122,7 @@ public abstract class KnownConsistencyPredicate extends KnownConsistencyPredicat
     }
 
     /**
-     * A KnownConsistencyPredicate should be deleted when the
+     * A DomainConsistencyPredicate should be deleted when the
      * ConsistencyPredicate method is removed from the code, or the containing
      * class is removed. In either case, we can delete all the associated
      * DependenceRecords.
@@ -132,38 +132,38 @@ public abstract class KnownConsistencyPredicate extends KnownConsistencyPredicat
     public void classDelete() {
 	checkFrameworkNotInitialized();
 	System.out.println("[ConsistencyPredicates] Deleting predicate " + getPredicate()
-		+ ((getPredicate() == null) ? " of " + getPersistentDomainMetaClass().getDomainClass() : ""));
-	for (PersistentDependenceRecord dependenceRecord : getPersistentDependenceRecords()) {
+		+ ((getPredicate() == null) ? " of " + getDomainMetaClass().getDomainClass() : ""));
+	for (DomainDependenceRecord dependenceRecord : getDomainDependenceRecords()) {
 	    dependenceRecord.delete();
 	}
-	removePersistentDomainMetaClass();
+	removeDomainMetaClass();
 	deleteDomainObject();
     }
 
-    public static <PredicateType extends KnownConsistencyPredicate> PredicateType readKnownConsistencyPredicate(
+    public static <PredicateType extends DomainConsistencyPredicate> PredicateType readDomainConsistencyPredicate(
 	    Class<? extends AbstractDomainObject> domainClass, String predicateName) {
-	return (PredicateType) PersistentDomainMetaClass.readPersistentDomainMetaClass(domainClass)
+	return (PredicateType) DomainMetaClass.readDomainMetaClass(domainClass)
 		.getDeclaredConsistencyPredicate(predicateName);
     }
 
-    public static <PredicateType extends KnownConsistencyPredicate> PredicateType readKnownConsistencyPredicate(
+    public static <PredicateType extends DomainConsistencyPredicate> PredicateType readDomainConsistencyPredicate(
 	    Method predicateMethod) {
-	return (PredicateType) PersistentDomainMetaClass.readPersistentDomainMetaClass(
+	return (PredicateType) DomainMetaClass.readDomainMetaClass(
 		(Class<? extends AbstractDomainObject>) predicateMethod.getDeclaringClass()).getDeclaredConsistencyPredicate(
 		predicateMethod);
     }
 
-    public static <PredicateType extends KnownConsistencyPredicate> PredicateType createNewKnownConsistencyPredicate(
-	    Method predicateMethod, PersistentDomainMetaClass metaClass) {
-	KnownConsistencyPredicate newKnownConsistencyPredicate;
+    public static <PredicateType extends DomainConsistencyPredicate> PredicateType createNewDomainConsistencyPredicate(
+	    Method predicateMethod, DomainMetaClass metaClass) {
+	DomainConsistencyPredicate newDomainConsistencyPredicate;
 	int methodModifiers = predicateMethod.getModifiers();
 	if (Modifier.isPrivate(methodModifiers)) {
-	    newKnownConsistencyPredicate = new PrivateConsistencyPredicate(predicateMethod, metaClass);
+	    newDomainConsistencyPredicate = new PrivateConsistencyPredicate(predicateMethod, metaClass);
 	} else if (Modifier.isFinal(methodModifiers)) {
-	    newKnownConsistencyPredicate = new FinalConsistencyPredicate(predicateMethod, metaClass);
+	    newDomainConsistencyPredicate = new FinalConsistencyPredicate(predicateMethod, metaClass);
 	} else {
-	    newKnownConsistencyPredicate = new PublicConsistencyPredicate(predicateMethod, metaClass);
+	    newDomainConsistencyPredicate = new PublicConsistencyPredicate(predicateMethod, metaClass);
 	}
-	return (PredicateType) newKnownConsistencyPredicate;
+	return (PredicateType) newDomainConsistencyPredicate;
     }
 }
