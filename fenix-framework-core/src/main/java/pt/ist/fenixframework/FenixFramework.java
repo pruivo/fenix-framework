@@ -6,7 +6,6 @@ import pt.ist.fenixframework.pstm.DomainFenixFrameworkRoot;
 import pt.ist.fenixframework.pstm.DomainMetaClass;
 import pt.ist.fenixframework.pstm.DomainMetaObject;
 import pt.ist.fenixframework.pstm.MetadataManager;
-import pt.ist.fenixframework.pstm.PersistenceFenixFrameworkRoot;
 import pt.ist.fenixframework.pstm.PersistentRoot;
 import pt.ist.fenixframework.pstm.Transaction;
 import pt.ist.fenixframework.pstm.repository.RepositoryBootstrap;
@@ -26,7 +25,7 @@ import dml.DomainModel;
  */
 public class FenixFramework {
 
-    private static final String PERSISTENCE_FENIX_FRAMEWORK_ROOT_KEY = "PersistenceFenixFrameworkRoot";
+    private static final String DOMAIN_FENIX_FRAMEWORK_ROOT_KEY = "DomainFenixFrameworkRoot";
     private static final Object INIT_LOCK = new Object();
     private static boolean bootstrapped = false;
     private static boolean initialized = false;
