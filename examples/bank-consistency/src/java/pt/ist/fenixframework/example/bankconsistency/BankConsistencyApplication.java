@@ -40,8 +40,7 @@ public class BankConsistencyApplication extends BankConsistencyApplication_Base 
 	    System.out
 		    .println("=========================== DOMAIN METACLASSES AND KNOWN CONSISTENCY PREDICATES ===========================");
 	    Set<DomainMetaClass> visitedMetaClasses = new HashSet<DomainMetaClass>();
-	    for (DomainMetaClass metaClass : DomainFenixFrameworkRoot.getInstance()
-.getDomainMetaClasses()) {
+	    for (DomainMetaClass metaClass : DomainFenixFrameworkRoot.getInstance().getDomainMetaClasses()) {
 		if (visitedMetaClasses.contains(metaClass)) {
 		    continue;
 		}
@@ -112,7 +111,10 @@ public class BankConsistencyApplication extends BankConsistencyApplication_Base 
 		classDescription += " extends ^ " + metaSuperclass.getDomainClass();
 	    }
 	    System.out.println(classDescription);
-	    System.out.println(metaClass.getExistingDomainMetaObjectsCount() + " existing objects");
+	    System.out.println(metaClass.getMetaObjectCount() + " existing objects.");
+	    if (metaClass.getMetaObjectCount() != metaClass.getExistingDomainMetaObjectsCount()) {
+		System.out.println("\t\t\t WARNING: The meta object count of this meta class is INCONSISTENT.");
+	    }
 	    printDeclaredKnownConsistencyPredicates(metaClass);
 	    visitedMetaClasses.add(metaClass);
 

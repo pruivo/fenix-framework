@@ -14,6 +14,8 @@ import pt.ist.fenixframework.pstm.consistencyPredicates.DomainConsistencyPredica
 import pt.ist.fenixframework.pstm.consistencyPredicates.NoDomainMetaData;
 import pt.ist.fenixframework.pstm.consistencyPredicates.PrivateConsistencyPredicate;
 import pt.ist.fenixframework.pstm.consistencyPredicates.PublicConsistencyPredicate;
+import dml.runtime.Relation;
+import dml.runtime.RelationAdapter;
 
 /**
  * A DomainMetaClass is the domain entity that represents a class existing in
@@ -29,6 +31,26 @@ import pt.ist.fenixframework.pstm.consistencyPredicates.PublicConsistencyPredica
  **/
 @NoDomainMetaData
 public class DomainMetaClass extends DomainMetaClass_Base {
+
+    static {
+	DomainMetaClassDomainMetaObjects.addListener(new RelationAdapter<DomainMetaClass, DomainMetaObject>() {
+	    @Override
+	    public void beforeRemove(Relation<DomainMetaClass, DomainMetaObject> rel, DomainMetaClass metaClass,
+		    DomainMetaObject metaObject) {
+		if (metaClass != null) {
+		    metaClass.setMetaObjectCount(metaClass.getMetaObjectCount() - 1);
+		}
+	    }
+	    
+	    @Override
+	    public void beforeAdd(Relation<DomainMetaClass, DomainMetaObject> rel, DomainMetaClass metaClass,
+		    DomainMetaObject metaObject) {
+		if (metaClass != null) {
+		    metaClass.setMetaObjectCount(metaClass.getMetaObjectCount() + 1);
+		}
+	    }
+	});
+    }
 
     public static Comparator<DomainMetaClass> COMPARATOR_BY_CLASS_HIERARCHY_TOP_DOWN = new Comparator<DomainMetaClass>() {
 	@Override
@@ -51,6 +73,7 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 	checkFrameworkNotInitialized();
 	setDomainClass(domainClass);
 	DomainFenixFrameworkRoot.getInstance().addDomainMetaClasses(this);
+	setMetaObjectCount(0);
 
 	System.out.println("[MetaClasses] Creating new MetaClass: " + domainClass);
     }
@@ -241,7 +264,7 @@ public class DomainMetaClass extends DomainMetaClass_Base {
      **/
     protected void delete() {
 	checkFrameworkNotInitialized();
-	if (hasAnyExistingDomainMetaObjects()) {
+	if (getMetaObjectCount() != 0) {
 	    throw new Error("Cannot delete a domain class that has existing domain objects");
 	}
 
