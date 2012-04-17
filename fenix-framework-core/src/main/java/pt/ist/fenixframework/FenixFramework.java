@@ -56,7 +56,7 @@ public class FenixFramework {
 		throw new Error("Fenix framework already initialized");
 	    }
 
-	    initPersistenceFenixFrameworkRoot();
+	    initDomainFenixFrameworkRoot();
 	    PersistentRoot.initRootIfNeeded(config);
 	    FenixFrameworkPlugin[] plugins = config.getPlugins();
 	    if (plugins != null) {
@@ -79,7 +79,7 @@ public class FenixFramework {
 	return initialized;
     }
 
-    private static void initPersistenceFenixFrameworkRoot() {
+    private static void initDomainFenixFrameworkRoot() {
 	Transaction.withTransaction(new TransactionalCommand() {
 	    @Override
 	    public void doIt() {
