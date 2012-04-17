@@ -1,6 +1,9 @@
 package pt.ist.fenixframework.pstm;
 
 import java.lang.reflect.Method;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -14,6 +17,7 @@ import pt.ist.fenixframework.pstm.consistencyPredicates.DomainConsistencyPredica
 import pt.ist.fenixframework.pstm.consistencyPredicates.NoDomainMetaData;
 import pt.ist.fenixframework.pstm.consistencyPredicates.PrivateConsistencyPredicate;
 import pt.ist.fenixframework.pstm.consistencyPredicates.PublicConsistencyPredicate;
+import pt.ist.fenixframework.pstm.repository.DbUtil;
 import dml.runtime.Relation;
 import dml.runtime.RelationAdapter;
 
@@ -160,8 +164,7 @@ public class DomainMetaClass extends DomainMetaClass_Base {
      */
     protected void initExistingDomainObjects() {
 	checkFrameworkNotInitialized();
-	Set<String> existingOIDs = getExistingOIDsForClass(getDomainClass());
-	for (String oid : existingOIDs) {
+	for (String oid : getExistingOIDsForClass(getDomainClass())) {
 	    AbstractDomainObject existingDO = (AbstractDomainObject) AbstractDomainObject.fromOID(Long.valueOf(oid));
 	    DomainMetaObject metaObject = new DomainMetaObject();
 	    metaObject.setDomainObject(existingDO);
@@ -169,10 +172,28 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 	}
     }
 
-    private Set<String> getExistingOIDsForClass(Class<? extends AbstractDomainObject> domainClass) {
-	// TODO:
-	// Create a DB query to obtain all objects OIDs of this type
-	return new HashSet<String>();
+    private List<String> getExistingOIDsForClass(Class<? extends AbstractDomainObject> domainClass) {
+	DomainMetaClass topSuperClass = this;
+	while (topSuperClass.hasDomainMetaSuperclass()) {
+	    topSuperClass = topSuperClass.getDomainMetaSuperclass();
+	}
+	String tableName = DbUtil.convertToDBStyle(topSuperClass.getDomainClass().getSimpleName());
+	String className = getDomainClass().getName();
+
+	String query = "select OID from " + tableName + ", FF$DOMAIN_CLASS_INFO where OID >> 32 = DOMAIN_CLASS_ID and DOMAIN_CLASS_NAME = '" + className + "'";
+	
+	ArrayList<String> oids = new ArrayList<String>();
+	try {
+	    Statement statement = Transaction.getCurrentJdbcConnection().createStatement();
+	    ResultSet resultSet = statement.executeQuery(query);
+	    while (resultSet.next()) {
+		oids.add(resultSet.getString("OID"));
+	    }
+	} catch (SQLException e) {
+	    throw new Error(e);
+	}
+
+	return oids;
     }
 
     @Override

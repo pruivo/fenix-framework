@@ -210,6 +210,7 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 	}
 
 	for (DomainMetaClass metaClass : createdMetaClasses) {
+	    Transaction.beginTransaction();
 	    metaClass.initExistingDomainObjects();
 	    if (hasSuperclassInDML(metaClass)) {
 		metaClass.initDomainMetaSuperclass(getDomainMetaSuperclassFromDML(metaClass));
@@ -314,11 +315,12 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 
 	// Third, execute the predicates for the affected classes
 	for (DomainConsistencyPredicate knownConsistencyPredicate : createdPredicates) {
+	    Transaction.beginTransaction();
 	    knownConsistencyPredicate.executeConsistencyPredicateForMetaClassAndSubclasses(metaClass);
 	}
     }
 
-    private void processOldPredicates(Set<DomainConsistencyPredicate> oldPredicatesToRemove, DomainMetaClass metaClass) {
+    private void processOldPredicates(Set<DomainConsistencyPredicate> oldPredicatesToRemove, final DomainMetaClass metaClass) {
 	deleteOldPredicates(oldPredicatesToRemove, metaClass);
     }
 
