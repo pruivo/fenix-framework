@@ -75,10 +75,12 @@ public class Main {
 
     @Atomic
     private static void createXptos() {
-	/*Xpto xpto11 = new Xpto();
-	Xpto xpto12 = new Xpto();
-	xpto11.setBlah("I am Xpto");
-	xpto12.setBlah("Blah!");*/
+	new Xpto1();
+	new Xpto2();
+	new Xpto2();
+	new Xpto3();
+	new Xpto3();
+	new Xpto3();
     }
 
     @Atomic

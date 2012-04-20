@@ -20,9 +20,15 @@ class Company {
   String companyName;
 }
 
-/*class Xpto {
+class Xpto1 {
   String blah;
-}*/
+}
+
+class Xpto2 extends Xpto1 {
+}
+
+class Xpto3  extends Xpto1 {
+}
 
 
 

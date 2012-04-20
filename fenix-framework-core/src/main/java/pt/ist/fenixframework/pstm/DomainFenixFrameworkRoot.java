@@ -203,7 +203,8 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
     }
 
     private void createNewMetaClasses(Collection<Class<? extends AbstractDomainObject>> newClassesToAdd) {
-	Set<DomainMetaClass> createdMetaClasses = new HashSet<DomainMetaClass>();
+	Set<DomainMetaClass> createdMetaClasses = new TreeSet<DomainMetaClass>(
+		DomainMetaClass.COMPARATOR_BY_CLASS_HIERARCHY_TOP_DOWN);
 	for (Class<? extends AbstractDomainObject> domainClass : newClassesToAdd) {
 	    DomainMetaClass newDomainMetaClass = new DomainMetaClass(domainClass);
 	    createdMetaClasses.add(newDomainMetaClass);
@@ -211,10 +212,10 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 
 	for (DomainMetaClass metaClass : createdMetaClasses) {
 	    Transaction.beginTransaction();
-	    metaClass.initExistingDomainObjects();
 	    if (hasSuperclassInDML(metaClass)) {
 		metaClass.initDomainMetaSuperclass(getDomainMetaSuperclassFromDML(metaClass));
 	    }
+	    metaClass.initExistingDomainObjects();
 	}
     }
 
