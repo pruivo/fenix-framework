@@ -7,12 +7,13 @@ import pt.ist.fenixframework.pstm.consistencyPredicates.DomainDependenceRecord;
 import pt.ist.fenixframework.pstm.consistencyPredicates.NoDomainMetaData;
 
 /**
- * Each DomainObject is associated with one DomainMetaObject, which is a
+ * Each domain object is associated with one DomainMetaObject, which is a
  * representation of the domainObject inside the fenix-framework's own domain.
- * The DomainMetaObject is created when the domainObject is created.
+ * The DomainMetaObject is created when the domain object is created.
  * 
  * The DomainMetaObject stores all the dependencies to this domainObject from
- * DomainDependenceRecords, and the the domainObject's DomainMetaClass.
+ * {@link DomainDependenceRecord}s, and the the domain object's
+ * {@link DomainMetaClass}.
  **/
 @NoDomainMetaData
 public class DomainMetaObject extends DomainMetaObject_Base implements Depended<DomainDependenceRecord> {

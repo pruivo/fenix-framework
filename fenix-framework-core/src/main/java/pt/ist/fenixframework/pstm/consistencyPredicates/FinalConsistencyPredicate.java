@@ -5,13 +5,14 @@ import java.lang.reflect.Method;
 import pt.ist.fenixframework.pstm.DomainMetaClass;
 
 /**
- * A FinalConsistencyPredicate is a PublicConsistencyPredicate that represents
- * predicate methods that are either public or protected, and are final. It can
- * override, but cannot be overridden by other PublicConsistencyPredicates.
+ * A FinalConsistencyPredicate is a {@link PublicConsistencyPredicate} that
+ * represents predicate methods that are either public or protected, and are
+ * final. It can override, but cannot be overridden by other
+ * {@link PublicConsistencyPredicate}s.
  * 
- * Therefore, on creation, unlike the PublicConsistencyPredicate, the execution
- * of the new PublicConsistencyPredicate does not need to check subclasses for
- * overriding methods.
+ * Therefore, on creation, unlike the {@link PublicConsistencyPredicate}, the
+ * execution of the new {@link PublicConsistencyPredicate} does not need to
+ * check subclasses for overriding methods.
  **/
 @NoDomainMetaData
 public class FinalConsistencyPredicate extends FinalConsistencyPredicate_Base {

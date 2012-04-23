@@ -19,13 +19,13 @@ import dml.DomainModel;
 
 /**
  * The DomainFenixFrameworkRoot is a singleton root object that is related to
- * all the DomainMetaClasses in the system.
+ * all the {@link DomainMetaClass}es in the system.
  * 
  * The initialize method is called during the initialization of the
- * FenixFramework. This method is responsible for the initialization of the
- * DomainMetaClasses, and the DomainConsistencyPredicates. It creates the
- * persistent versions of new domain classes and predicates that have been
- * detected in the code, and deletes old ones that have been removed.
+ * {@link FenixFramework}. This method is responsible for the initialization of
+ * the {@link DomainMetaClass}es, and the {@link DomainConsistencyPredicates}.
+ * It creates the persistent versions of new domain classes and predicates that
+ * have been detected in the code, and deletes old ones that have been removed.
  **/
 @NoDomainMetaData
 public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
