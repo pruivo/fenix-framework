@@ -106,12 +106,6 @@ public class PublicConsistencyPredicate extends PublicConsistencyPredicate_Base 
     private void removeDomainDependenceRecordsForMetaClassAndSubclasses(DomainMetaClass metaClass) {
 	removeDomainDependenceRecordsForExistingDomainObjects(metaClass.getExistingDomainObjects());
 
-<<<<<<< HEAD
-=======
-    private void removeDomainDependenceRecordsForMetaClassAndSubclasses(DomainMetaClass metaClass) {
-	removeDomainDependenceRecordsForExistingDomainObjects(metaClass.getExistingDomainObjects());
-
->>>>>>> [Consistency Predicates] Minor Change: Renamed a few classes for
 	for (DomainMetaClass metaSubclass : metaClass.getDomainMetaSubclasses()) {
 	    removeDomainDependenceRecordsForMetaClassAndSubclasses(metaSubclass);
 	}
