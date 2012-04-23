@@ -5,9 +5,9 @@ import java.lang.reflect.Method;
 import pt.ist.fenixframework.pstm.DomainMetaClass;
 
 /**
- * A PrivateConsistencyPredicate is a DomainConsistencyPredicate that represents
- * predicate methods that are private. It can neither override, nor be
- * overridden other ConsistencyPredicates.
+ * A PrivateConsistencyPredicate is a {@link DomainConsistencyPredicate} that
+ * represents predicate methods that are private. It can neither override, nor
+ * be overridden by other consistency predicates.
  * 
  * Therefore, on creation, the new PrivateConsistencyPredicate is executed for
  * all instances of the declaring domain class and subclasses. Likewise, on

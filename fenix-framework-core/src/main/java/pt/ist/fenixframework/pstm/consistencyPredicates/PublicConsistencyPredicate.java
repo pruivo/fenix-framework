@@ -8,9 +8,9 @@ import pt.ist.fenixframework.pstm.AbstractDomainObject;
 import pt.ist.fenixframework.pstm.DomainMetaClass;
 
 /**
- * A PublicConsistencyPredicate is a DomainConsistencyPredicate that represents
- * predicate methods that are either public or protected. It can override and be
- * overridden by other PublicConsistencyPredicates.
+ * A PublicConsistencyPredicate is a {@link DomainConsistencyPredicate} that
+ * represents predicate methods that are either public or protected. It can
+ * override and be overridden by other PublicConsistencyPredicates.
  * 
  * Therefore, on creation, the dependence records of the overridden predicate
  * (if any) are removed from this class downward, and the new
