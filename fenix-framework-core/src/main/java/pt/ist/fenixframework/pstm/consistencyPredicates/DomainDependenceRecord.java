@@ -11,9 +11,10 @@ import pt.ist.fenixframework.pstm.DomainMetaObject;
 
 /**
  * A DomainDependenceRecord represents the result of the execution of a
- * ConsistencyPredicate method for one domainObject instance. The
- * DomainDependenceRecord has a collection of DomainMetaObjects, that represent
- * the domainObjects read to execute the ConsistencyPredicate.
+ * consistency predicate method for one domain object instance. The
+ * DomainDependenceRecord has a set of depended {@link DomainMetaObject}s, that
+ * represent the domain objects that were read to execute the consistency
+ * predicate.
  **/
 @NoDomainMetaData
 public class DomainDependenceRecord extends DomainDependenceRecord_Base implements

@@ -16,10 +16,11 @@ import pt.ist.fenixframework.pstm.TopLevelTransaction.Pair;
 import pt.ist.fenixframework.pstm.Transaction;
 
 /**
- * A DomainConsistencyPredicate represents a ConsistencyPredicate method that is
- * already known, and has previously been initialized by the system. By storing
- * which predicates are known and by detecting which predicates exist in the
- * code, we can determine which predicates are new, and which have been removed.
+ * A DomainConsistencyPredicate represents a consistency predicate method that
+ * is already known, and has previously been initialized by the system. By
+ * storing which predicates are known and by detecting which predicates exist in
+ * the code, we can determine which predicates are new, and which have been
+ * removed.
  **/
 @NoDomainMetaData
 public abstract class DomainConsistencyPredicate extends DomainConsistencyPredicate_Base {
