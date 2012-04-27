@@ -14,7 +14,6 @@ import java.util.Set;
 
 import pt.ist.fenixframework.FenixFramework;
 import pt.ist.fenixframework.pstm.consistencyPredicates.DomainConsistencyPredicate;
-import pt.ist.fenixframework.pstm.consistencyPredicates.NoDomainMetaData;
 import pt.ist.fenixframework.pstm.consistencyPredicates.PrivateConsistencyPredicate;
 import pt.ist.fenixframework.pstm.consistencyPredicates.PublicConsistencyPredicate;
 import pt.ist.fenixframework.pstm.repository.DbUtil;
@@ -33,7 +32,7 @@ import dml.runtime.RelationAdapter;
  * of it's class. Furthermore, a DomainMetaClass contains a set of all
  * {@link DomainConsistencyPredicate}s that are declared in its code.
  **/
-@NoDomainMetaData
+@NoDomainMetaObjects
 public class DomainMetaClass extends DomainMetaClass_Base {
 
     static {
@@ -286,7 +285,7 @@ public class DomainMetaClass extends DomainMetaClass_Base {
     protected void delete() {
 	checkFrameworkNotInitialized();
 	if (getMetaObjectCount() != 0) {
-	    throw new Error("Cannot delete a domain class that has existing domain objects");
+	    throw new Error("Cannot delete a domain class that has existing meta objects");
 	}
 
 	// If we are deleting this class, then the previous subclass will have changed extends
@@ -310,8 +309,37 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 	deleteDomainObject();
     }
 
+    /**
+     * This method should be invoked only when the FenixFramework is deleting
+     * all the existing DomainMetaClasses and DomainMetaObjects. In this case, a
+     * DomainMetaClass can be deleted even if it has existing DomainMetaObjects.
+     **/
+    protected void massDelete() {
+	checkFrameworkNotInitialized();
+	for (DomainMetaClass metaSubclass : getDomainMetaSubclasses()) {
+	    metaSubclass.massDelete();
+	}
+
+	System.out.println("[MetaClasses] Deleted metaClass "
+		+ ((getDomainClass() == null) ? "" : getDomainClass().getSimpleName()));
+	for (DomainConsistencyPredicate domainConsistencyPredicate : getDeclaredConsistencyPredicates()) {
+	    domainConsistencyPredicate.classDelete();
+	}
+
+	for (DomainMetaObject metaObject : getExistingDomainMetaObjects()) {
+	    metaObject.delete();
+	}
+
+	removeDomainMetaSuperclass();
+	DomainFenixFrameworkRoot root = getDomainFenixFrameworkRoot();
+	if (root != null) {
+	    root.removeDomainMetaClasses(this);
+	}
+	//Deletes THIS metaClass, which is also a Fenix-Framework DomainObject
+	deleteDomainObject();
+    }
+
     public static DomainMetaClass readDomainMetaClass(Class<? extends AbstractDomainObject> domainClass) {
 	return DomainFenixFrameworkRoot.getInstance().getDomainMetaClass(domainClass);
     }
-
 }

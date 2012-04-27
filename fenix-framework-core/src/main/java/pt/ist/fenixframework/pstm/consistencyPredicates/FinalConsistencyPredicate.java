@@ -3,6 +3,7 @@ package pt.ist.fenixframework.pstm.consistencyPredicates;
 import java.lang.reflect.Method;
 
 import pt.ist.fenixframework.pstm.DomainMetaClass;
+import pt.ist.fenixframework.pstm.NoDomainMetaObjects;
 
 /**
  * A FinalConsistencyPredicate is a {@link PublicConsistencyPredicate} that
@@ -14,7 +15,7 @@ import pt.ist.fenixframework.pstm.DomainMetaClass;
  * execution of the new {@link PublicConsistencyPredicate} does not need to
  * check subclasses for overriding methods.
  **/
-@NoDomainMetaData
+@NoDomainMetaObjects
 public class FinalConsistencyPredicate extends FinalConsistencyPredicate_Base {
 
     public FinalConsistencyPredicate(Method predicateMethod, DomainMetaClass metaClass) {

@@ -8,6 +8,7 @@ import jvstm.cps.Depended;
 import jvstm.cps.DependenceRecord;
 import pt.ist.fenixframework.pstm.AbstractDomainObject;
 import pt.ist.fenixframework.pstm.DomainMetaObject;
+import pt.ist.fenixframework.pstm.NoDomainMetaObjects;
 
 /**
  * A DomainDependenceRecord represents the result of the execution of a
@@ -16,7 +17,7 @@ import pt.ist.fenixframework.pstm.DomainMetaObject;
  * represent the domain objects that were read to execute the consistency
  * predicate.
  **/
-@NoDomainMetaData
+@NoDomainMetaObjects
 public class DomainDependenceRecord extends DomainDependenceRecord_Base implements
 	DependenceRecord<DomainMetaObject> {
 

@@ -1,6 +1,6 @@
 package pt.ist.fenixframework.example.bankconsistency;
 
-import jvstm.cps.ConsistencyPredicate;
+import pt.ist.fenixframework.pstm.consistencyPredicates.ConsistencyPredicate;
 
 public class Company extends Company_Base {
 

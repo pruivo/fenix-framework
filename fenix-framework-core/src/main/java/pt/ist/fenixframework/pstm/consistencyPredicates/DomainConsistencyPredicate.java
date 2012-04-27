@@ -12,6 +12,7 @@ import pt.ist.fenixframework.FenixFramework;
 import pt.ist.fenixframework.pstm.AbstractDomainObject;
 import pt.ist.fenixframework.pstm.DomainMetaClass;
 import pt.ist.fenixframework.pstm.FenixConsistencyCheckTransaction;
+import pt.ist.fenixframework.pstm.NoDomainMetaObjects;
 import pt.ist.fenixframework.pstm.TopLevelTransaction.Pair;
 import pt.ist.fenixframework.pstm.Transaction;
 
@@ -22,7 +23,7 @@ import pt.ist.fenixframework.pstm.Transaction;
  * the code, we can determine which predicates are new, and which have been
  * removed.
  **/
-@NoDomainMetaData
+@NoDomainMetaObjects
 public abstract class DomainConsistencyPredicate extends DomainConsistencyPredicate_Base {
 
     public DomainConsistencyPredicate() {

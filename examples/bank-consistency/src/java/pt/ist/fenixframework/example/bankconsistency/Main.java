@@ -22,19 +22,16 @@ public class Main {
 		rootClass = BankConsistencyApplication.class;
 		errorfIfDeletingObjectNotDisconnected = true;
 		errorIfChangingDeletedObject = true;
+		canCreateDomainMetaObjects = true;
 	    }
 	};
 	FenixFramework.initialize(config);
 
 	try {
 
+	    createThingsAnimalsAndDogs();
+
 	    //editFenixFrameworkDomainIllegaly();
-
-	    //createXptos();
-
-	    //editXptos();
-
-	    //deleteXptos();
 
 	    populateDomainConsistent();
 
@@ -64,6 +61,30 @@ public class Main {
     }
 
     @Atomic
+    private static void createThingsAnimalsAndDogs() {
+	Thing thing = new Thing();
+	thing.setSize(3);
+	Animal animal1 = new Animal();
+	animal1.setAge(3);
+	animal1.setSize(50);
+	Animal animal2 = new Animal();
+	animal2.setAge(3);
+	animal2.setSize(50);
+	Dog dog1 = new Dog();
+	dog1.setName("boby");
+	dog1.setAge(3);
+	dog1.setSize(3);
+	Dog dog2 = new Dog();
+	dog2.setName("boby");
+	dog2.setAge(3);
+	dog2.setSize(3);
+	Dog dog3 = new Dog();
+	dog3.setName("boby");
+	dog3.setAge(3);
+	dog3.setSize(3);
+    }
+
+    @Atomic
     private static void editFenixFrameworkDomainIllegaly() {
 	DomainMetaClass accountMetaClass = DomainFenixFrameworkRoot.getInstance().getDomainMetaClass(
 		Account.class);
@@ -71,31 +92,6 @@ public class Main {
 	for (DomainConsistencyPredicate predicate : accountMetaClass.getDeclaredConsistencyPredicates()) {
 	    //accountMetaClass.removeDeclaredConsistencyPredicates(predicate);
 	}
-    }
-
-    @Atomic
-    private static void createXptos() {
-	new Xpto1();
-	new Xpto2();
-	new Xpto2();
-	new Xpto3();
-	new Xpto3();
-	new Xpto3();
-    }
-
-    @Atomic
-    private static void editXptos() {
-	/*Xpto xpto = AbstractDomainObject.fromOID(55834574851L);
-	xpto.setBlah("Xpto");*/
-    }
-
-    @Atomic
-    private static void deleteXptos() {
-	/*for (Xpto xpto : BankConsistencyApplication.getInstance().getXptos()) {
-	    xpto.removeApplication();
-	    xpto.deleteDomainObject();
-	    return;
-	}*/
     }
 
     @Atomic

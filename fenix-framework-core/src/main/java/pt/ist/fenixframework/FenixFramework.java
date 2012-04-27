@@ -27,11 +27,13 @@ public class FenixFramework {
     private static final Object INIT_LOCK = new Object();
     private static boolean bootstrapped = false;
     private static boolean initialized = false;
+    private static boolean createDomainMetaObjects = false;
 
     private static Config config;
 
     public static void initialize(Config config) {
         bootStrap(config);
+	createDomainMetaObjects = config.canCreateDomainMetaObjects;
         initialize();
     }
 
@@ -111,5 +113,9 @@ public class FenixFramework {
 
     public static <T extends DomainObject> T getRoot() {
 	return (T) PersistentRoot.getRoot();
+    }
+
+    public static boolean canCreateDomainMetaObjects() {
+	return createDomainMetaObjects;
     }
 }
