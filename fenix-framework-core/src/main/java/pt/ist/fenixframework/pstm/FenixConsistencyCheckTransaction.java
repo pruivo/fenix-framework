@@ -1,5 +1,6 @@
 package pt.ist.fenixframework.pstm;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -12,6 +13,7 @@ import jvstm.cps.Depended;
 import org.apache.ojb.broker.PersistenceBroker;
 
 import pt.ist.fenixframework.DomainObject;
+import pt.ist.fenixframework.FenixFramework;
 
 public class FenixConsistencyCheckTransaction extends ReadTransaction 
     implements ConsistencyCheckTransaction,FenixTransaction {
@@ -37,8 +39,14 @@ public class FenixConsistencyCheckTransaction extends ReadTransaction
         throw new Error("In a FenixConsistencyCheckTransaction we must call the three-arg getBoxValue method");
     }
 
+    private static final Set<Depended> EMPTY_SET = Collections.unmodifiableSet(new HashSet<Depended>());
+
     @Override
     public Set<Depended> getDepended() {
+	if (!FenixFramework.canCreateDomainMetaObjects()) {
+	    return EMPTY_SET;
+	}
+
 	Set<Depended> dependedSet = new HashSet<Depended>(boxesRead.size());
 
 	for (VBox box : boxesRead) {
@@ -77,6 +85,11 @@ public class FenixConsistencyCheckTransaction extends ReadTransaction
 
     @Override
     public <T> T getBoxValue(VBox<T> vbox, Object obj, String attr) {
+	if ((!FenixFramework.canCreateDomainMetaObjects()) && (obj != checkedObj)) {
+	    throw new Error(
+		    "Consistency predicates are not allowed to access other objects, unless the FenixFramework is configured to create DomainMetaObjects.");
+	}
+
 	boxesRead.add(vbox);
 
         // ask the parent transaction (a RW tx) for the value of the box

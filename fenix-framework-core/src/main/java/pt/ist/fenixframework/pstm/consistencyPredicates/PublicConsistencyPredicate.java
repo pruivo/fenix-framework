@@ -6,6 +6,7 @@ import java.util.List;
 
 import pt.ist.fenixframework.pstm.AbstractDomainObject;
 import pt.ist.fenixframework.pstm.DomainMetaClass;
+import pt.ist.fenixframework.pstm.NoDomainMetaObjects;
 
 /**
  * A PublicConsistencyPredicate is a {@link DomainConsistencyPredicate} that
@@ -20,7 +21,7 @@ import pt.ist.fenixframework.pstm.DomainMetaClass;
  * overridden predicate (if any) is executed for all instances of the declaring
  * domain class and subclasses that do not override the predicate method.
  **/
-@NoDomainMetaData
+@NoDomainMetaObjects
 public class PublicConsistencyPredicate extends PublicConsistencyPredicate_Base {
 
     public PublicConsistencyPredicate() {

@@ -3,6 +3,7 @@ package pt.ist.fenixframework.pstm.consistencyPredicates;
 import java.lang.reflect.Method;
 
 import pt.ist.fenixframework.pstm.DomainMetaClass;
+import pt.ist.fenixframework.pstm.NoDomainMetaObjects;
 
 /**
  * A PrivateConsistencyPredicate is a {@link DomainConsistencyPredicate} that
@@ -13,7 +14,7 @@ import pt.ist.fenixframework.pstm.DomainMetaClass;
  * all instances of the declaring domain class and subclasses. Likewise, on
  * deletion, all it's dependence records are removed.
  **/
-@NoDomainMetaData
+@NoDomainMetaObjects
 public class PrivateConsistencyPredicate extends PrivateConsistencyPredicate_Base {
 
     public PrivateConsistencyPredicate(Method predicateMethod, DomainMetaClass metaClass) {

@@ -13,7 +13,6 @@ import java.util.TreeSet;
 import pt.ist.fenixframework.FenixFramework;
 import pt.ist.fenixframework.pstm.consistencyPredicates.ConsistencyPredicate;
 import pt.ist.fenixframework.pstm.consistencyPredicates.DomainConsistencyPredicate;
-import pt.ist.fenixframework.pstm.consistencyPredicates.NoDomainMetaData;
 import dml.DomainClass;
 import dml.DomainModel;
 
@@ -27,7 +26,7 @@ import dml.DomainModel;
  * It creates the persistent versions of new domain classes and predicates that
  * have been detected in the code, and deletes old ones that have been removed.
  **/
-@NoDomainMetaData
+@NoDomainMetaObjects
 public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 
     private static Map<Class<? extends AbstractDomainObject>, DomainClass> existingDMLDomainClasses;
@@ -84,8 +83,12 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
     // Init methods called during the FenixFramework init
     public void initialize(DomainModel domainModel) {
 	checkFrameworkNotInitialized();
-	initializeDomainMetaClasses(domainModel);
-	initializeDomainConsistencyPredicates();
+	if (FenixFramework.canCreateDomainMetaObjects()) {
+	    initializeDomainMetaClasses(domainModel);
+	    initializeDomainConsistencyPredicates();
+	} else {
+	    deleteAllMetaData();
+	}
     }
 
     // Init methods for DomainMetaClasses
@@ -133,7 +136,7 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 		Class<? extends AbstractDomainObject> domainClass = (Class<? extends AbstractDomainObject>) Class
 			.forName(dmlDomainClass.getFullName());
 
-		if (!domainClass.isAnnotationPresent(NoDomainMetaData.class)) {
+		if (!domainClass.isAnnotationPresent(NoDomainMetaObjects.class)) {
 		    existingDomainClasses.put(domainClass, dmlDomainClass);
 		}
 	    }
@@ -343,4 +346,11 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 	}
     }
     // End of init methods for DomainConsistencyPredicates
+
+    private void deleteAllMetaData() {
+	for (DomainMetaClass metaClass : getDomainMetaClasses()) {
+	    Transaction.beginTransaction();
+	    metaClass.massDelete();
+	}
+    }
 }

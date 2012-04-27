@@ -6,6 +6,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import pt.ist.fenixframework.pstm.DomainMetaClass;
+import pt.ist.fenixframework.pstm.DomainMetaObject;
 import pt.ist.fenixframework.pstm.dml.FenixDomainModel;
 
 /**
@@ -190,6 +192,15 @@ public class Config {
      * will load on startup additional plugins.
      */
     protected FenixFrameworkPlugin[] plugins;
+
+    /**
+     * This <strong>optional</strong> parameter indicates whether the framework
+     * should automatically create {@link DomainMetaObject}s and
+     * {@link DomainMetaClass}es. If the value is false, a consistency predicate
+     * of a domain object is not allowed to read values from other objects. The
+     * default value is false.
+     */
+    protected boolean canCreateDomainMetaObjects = false;
 
     private static void checkRequired(Object obj, String fieldName) {
 	if (obj == null) {

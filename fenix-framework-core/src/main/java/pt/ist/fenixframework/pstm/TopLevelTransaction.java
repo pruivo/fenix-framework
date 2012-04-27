@@ -29,12 +29,13 @@ import org.apache.ojb.broker.PersistenceBrokerFactory;
 import org.apache.ojb.broker.accesslayer.LookupException;
 
 import pt.ist.fenixframework.DomainObject;
+import pt.ist.fenixframework.FenixFramework;
 import pt.ist.fenixframework.TxIntrospector;
 import pt.ist.fenixframework.pstm.DBChanges.AttrChangeLog;
 import pt.ist.fenixframework.pstm.consistencyPredicates.ConsistencyPredicate;
+import pt.ist.fenixframework.pstm.consistencyPredicates.ConsistencyPredicateSystem;
 import pt.ist.fenixframework.pstm.consistencyPredicates.DomainConsistencyPredicate;
 import pt.ist.fenixframework.pstm.consistencyPredicates.DomainDependenceRecord;
-import pt.ist.fenixframework.pstm.consistencyPredicates.NoDomainMetaData;
 
 public class TopLevelTransaction extends ConsistentTopLevelTransaction implements FenixTransaction, TxIntrospector {
 
@@ -462,9 +463,25 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
 
     // consistency-predicates-system methods
 
+    // checks all the necessary consistency predicates
+    @Override
+    protected void checkConsistencyPredicates() {
+	if (!FenixFramework.canCreateDomainMetaObjects()) {
+	    // checks the consistency predicates for the objects modified in this transaction
+	    for (Object obj : getDBChanges().getModifiedObjects()) {
+		checkConsistencyPredicates(obj);
+	    }
+	}
+	super.checkConsistencyPredicates();
+    }
+
     // check consistency predicates of a changed object
     @Override
     protected void recheckDependenceRecord(DependenceRecord dependence) {
+	if (!FenixFramework.canCreateDomainMetaObjects()) {
+	    // This should not happen
+	    throw new Error("Cannot recheck dependence records unless the framework is allowed to create meta objects");
+	}
 	DomainDependenceRecord dependenceRecord = (DomainDependenceRecord) dependence;
 	Pair pair = checkPredicateForOneObject(dependenceRecord.getDependent(), dependenceRecord.getPredicate(),
 		dependenceRecord.isConsistent());
@@ -497,7 +514,13 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
     // check consistency predicates of a new object
     @Override
     protected void checkConsistencyPredicates(Object newObject) {
-	if (newObject.getClass().isAnnotationPresent(NoDomainMetaData.class)) {
+	if (newObject.getClass().isAnnotationPresent(NoDomainMetaObjects.class)) {
+	    return;
+	}
+	if (!FenixFramework.canCreateDomainMetaObjects()) {
+	    for (Method predicate : ConsistencyPredicateSystem.getPredicatesFor(newObject)) {
+		checkPredicateForOneObject(newObject, predicate, true);
+	    }
 	    return;
 	}
 	AbstractDomainObject ado = (AbstractDomainObject) newObject;
@@ -518,6 +541,11 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
 
     @Override
     protected Iterator<DependenceRecord> getDependenceRecordsToRecheck() {
+	if (!FenixFramework.canCreateDomainMetaObjects()) {
+	    // Dependence records are not used if the FenixFramework is not configured
+	    // to create meta objects
+	    return Util.emptyIterator();
+	}
 	updateWriteSetWithRelationChanges();
 
 	Cons<Iterator<DependenceRecord>> iteratorsList = Cons.empty();
