@@ -25,11 +25,9 @@ import dml.DomainModel;
  */
 public class FenixFramework {
 
-    private static final String DOMAIN_FENIX_FRAMEWORK_ROOT_KEY = "DomainFenixFrameworkRoot";
     private static final Object INIT_LOCK = new Object();
     private static boolean bootstrapped = false;
     private static boolean initialized = false;
-    private static boolean createDomainMetaObjects = false;
 
     private static Config config;
 
