@@ -29,6 +29,8 @@ import dml.DomainModel;
 @NoDomainMetaObjects
 public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 
+    public static final String ROOT_KEY = "pt.ist.fenixframework.pstm.DomainFenixFrameworkRoot";
+
     private static Map<Class<? extends AbstractDomainObject>, DomainClass> existingDMLDomainClasses;
     private static final Map<Class<? extends AbstractDomainObject>, DomainMetaClass> existingDomainMetaClasses = new HashMap<Class<? extends AbstractDomainObject>, DomainMetaClass>();
 
