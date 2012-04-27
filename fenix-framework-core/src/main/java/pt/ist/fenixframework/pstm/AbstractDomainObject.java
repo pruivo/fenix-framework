@@ -11,7 +11,6 @@ import org.apache.ojb.broker.metadata.ClassDescriptor;
 
 import pt.ist.fenixframework.DomainObject;
 import pt.ist.fenixframework.FenixFramework;
-import pt.ist.fenixframework.pstm.consistencyPredicates.NoDomainMetaData;
 
 public abstract class AbstractDomainObject implements DomainObject, dml.runtime.FenixDomainObject, Serializable {
     // this should be final, but the ensureIdInternal method prevents it
