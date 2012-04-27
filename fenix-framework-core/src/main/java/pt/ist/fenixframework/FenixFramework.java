@@ -23,17 +23,14 @@ import dml.DomainModel;
  */
 public class FenixFramework {
 
-    private static final String DOMAIN_FENIX_FRAMEWORK_ROOT_KEY = "DomainFenixFrameworkRoot";
     private static final Object INIT_LOCK = new Object();
     private static boolean bootstrapped = false;
     private static boolean initialized = false;
-    private static boolean createDomainMetaObjects = false;
 
     private static Config config;
 
     public static void initialize(Config config) {
         bootStrap(config);
-	createDomainMetaObjects = config.canCreateDomainMetaObjects;
         initialize();
     }
 
@@ -88,7 +85,7 @@ public class FenixFramework {
 		if (getDomainFenixFrameworkRoot() == null) {
 		    try {
 			DomainFenixFrameworkRoot fenixFrameworkRoot = new DomainFenixFrameworkRoot();
-			PersistentRoot.addRoot(DOMAIN_FENIX_FRAMEWORK_ROOT_KEY, fenixFrameworkRoot);
+			PersistentRoot.addRoot(DomainFenixFrameworkRoot.ROOT_KEY, fenixFrameworkRoot);
 		    } catch (Exception exc) {
 			throw new Error(exc);
 		    }
@@ -100,7 +97,7 @@ public class FenixFramework {
     }
 
     public static DomainFenixFrameworkRoot getDomainFenixFrameworkRoot() {
-	return PersistentRoot.getRoot(DOMAIN_FENIX_FRAMEWORK_ROOT_KEY);
+	return PersistentRoot.getRoot(DomainFenixFrameworkRoot.ROOT_KEY);
     }
 
     public static Config getConfig() {
@@ -116,6 +113,6 @@ public class FenixFramework {
     }
 
     public static boolean canCreateDomainMetaObjects() {
-	return createDomainMetaObjects;
+	return getConfig().canCreateDomainMetaObjects;
     }
 }
