@@ -951,7 +951,7 @@ public class CodeGenerator {
         String capitalizedSlotName = capitalize(slotName);
 
         newline(out);
-	println(out, "@pt.ist.fenixframework.pstm.ConsistencyPredicate");
+	println(out, "@pt.ist.fenixframework.pstm.consistencyPredicates.ConsistencyPredicate");
         printMethod(out, "public final", "boolean", "checkMultiplicityOf" + capitalizedSlotName);
         startMethodBody(out);
 
@@ -990,7 +990,7 @@ public class CodeGenerator {
 
     protected void generateRequiredConsistencyPredicate(DomainClass domClass, PrintWriter out) {
         newline(out);
-	println(out, "@pt.ist.fenixframework.pstm.ConsistencyPredicate");
+	println(out, "@pt.ist.fenixframework.pstm.consistencyPredicates.ConsistencyPredicate");
         printMethod(out, "private", "boolean", "checkRequiredSlots");
         startMethodBody(out);
 
