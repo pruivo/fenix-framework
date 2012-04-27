@@ -55,6 +55,10 @@ public class VBox<E> extends jvstm.VBox<E> implements VersionedSubject,dml.runti
         put(newValue);
     }
     
+    /*
+     * Allows a nested FenixConsistencyCheckTransaction, that should not perform writes,
+     * to delegate the write to boxes to the parent TopLevelTransaction.
+     */
     public void putDelayed(E newE) {
 	FenixTransaction tx = Transaction.currentFenixTransaction();
 	if (tx == null) {

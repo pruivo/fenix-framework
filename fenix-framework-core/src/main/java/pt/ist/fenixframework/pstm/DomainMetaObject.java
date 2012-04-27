@@ -4,7 +4,6 @@ import java.util.Set;
 
 import jvstm.cps.Depended;
 import pt.ist.fenixframework.pstm.consistencyPredicates.DomainDependenceRecord;
-import pt.ist.fenixframework.pstm.consistencyPredicates.NoDomainMetaData;
 
 /**
  * Each domain object is associated with one DomainMetaObject, which is a
@@ -15,7 +14,7 @@ import pt.ist.fenixframework.pstm.consistencyPredicates.NoDomainMetaData;
  * {@link DomainDependenceRecord}s, and the the domain object's
  * {@link DomainMetaClass}.
  **/
-@NoDomainMetaData
+@NoDomainMetaObjects
 public class DomainMetaObject extends DomainMetaObject_Base implements Depended<DomainDependenceRecord> {
 
     public DomainMetaObject() {
