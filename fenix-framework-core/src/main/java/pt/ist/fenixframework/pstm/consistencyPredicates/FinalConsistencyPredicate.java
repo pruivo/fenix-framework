@@ -14,6 +14,8 @@ import pt.ist.fenixframework.pstm.NoDomainMetaObjects;
  * Therefore, on creation, unlike the {@link PublicConsistencyPredicate}, the
  * execution of the new {@link PublicConsistencyPredicate} does not need to
  * check subclasses for overriding methods.
+ * 
+ * @author João Neves - JoaoRoxoNeves@ist.utl.pt
  **/
 @NoDomainMetaObjects
 public class FinalConsistencyPredicate extends FinalConsistencyPredicate_Base {

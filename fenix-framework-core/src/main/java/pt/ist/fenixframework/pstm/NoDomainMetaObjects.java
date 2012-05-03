@@ -12,6 +12,8 @@ import java.lang.annotation.Target;
  * The framework will not create {@link DomainMetaClass}es or
  * {@link DomainMetaObject}s for domain classes with this annotation. The class
  * cannot define any consistency predicates.
+ * 
+ * @author João Neves - JoaoRoxoNeves@ist.utl.pt
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
