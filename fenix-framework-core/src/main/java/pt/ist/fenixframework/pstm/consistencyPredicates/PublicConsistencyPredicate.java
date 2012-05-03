@@ -20,6 +20,8 @@ import pt.ist.fenixframework.pstm.NoDomainMetaObjects;
  * Likewise, on deletion, all it's dependence records are removed, and the
  * overridden predicate (if any) is executed for all instances of the declaring
  * domain class and subclasses that do not override the predicate method.
+ * 
+ * @author João Neves - JoaoRoxoNeves@ist.utl.pt
  **/
 @NoDomainMetaObjects
 public class PublicConsistencyPredicate extends PublicConsistencyPredicate_Base {

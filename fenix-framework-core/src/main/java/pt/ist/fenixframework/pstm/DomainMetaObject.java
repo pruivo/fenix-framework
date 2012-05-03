@@ -13,6 +13,8 @@ import pt.ist.fenixframework.pstm.consistencyPredicates.DomainDependenceRecord;
  * The DomainMetaObject stores all the dependencies to this domainObject from
  * {@link DomainDependenceRecord}s, and the the domain object's
  * {@link DomainMetaClass}.
+ * 
+ * @author João Neves - JoaoRoxoNeves@ist.utl.pt
  **/
 @NoDomainMetaObjects
 public class DomainMetaObject extends DomainMetaObject_Base implements Depended<DomainDependenceRecord> {

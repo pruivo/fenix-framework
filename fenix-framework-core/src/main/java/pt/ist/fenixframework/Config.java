@@ -196,9 +196,9 @@ public class Config {
     /**
      * This <strong>optional</strong> parameter indicates whether the framework
      * should automatically create {@link DomainMetaObject}s and
-     * {@link DomainMetaClass}es. If the value is false, a consistency predicate
-     * of a domain object is not allowed to read values from other objects. The
-     * default value is false.
+     * {@link DomainMetaClass}es. Only if the value is true will a consistency
+     * predicate of a domain object be allowed to read values from other
+     * objects. The default value is false.
      */
     protected boolean canCreateDomainMetaObjects = false;
 
