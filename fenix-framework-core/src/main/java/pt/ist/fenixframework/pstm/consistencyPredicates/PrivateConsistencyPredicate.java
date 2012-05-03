@@ -13,6 +13,8 @@ import pt.ist.fenixframework.pstm.NoDomainMetaObjects;
  * Therefore, on creation, the new PrivateConsistencyPredicate is executed for
  * all instances of the declaring domain class and subclasses. Likewise, on
  * deletion, all it's dependence records are removed.
+ * 
+ * @author João Neves - JoaoRoxoNeves@ist.utl.pt
  **/
 @NoDomainMetaObjects
 public class PrivateConsistencyPredicate extends PrivateConsistencyPredicate_Base {

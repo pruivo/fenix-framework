@@ -13,18 +13,21 @@ import java.util.TreeSet;
 import pt.ist.fenixframework.FenixFramework;
 import pt.ist.fenixframework.pstm.consistencyPredicates.ConsistencyPredicate;
 import pt.ist.fenixframework.pstm.consistencyPredicates.DomainConsistencyPredicate;
+import pt.ist.fenixframework.pstm.consistencyPredicates.DomainDependenceRecord;
 import dml.DomainClass;
 import dml.DomainModel;
 
 /**
- * The DomainFenixFrameworkRoot is a singleton root object that is related to
- * all the {@link DomainMetaClass}es in the system.
+ * The <code>DomainFenixFrameworkRoot</code> is a singleton root object that is
+ * related to all the {@link DomainMetaClass}es in the system.
  * 
  * The initialize method is called during the initialization of the
  * {@link FenixFramework}. This method is responsible for the initialization of
  * the {@link DomainMetaClass}es, and the {@link DomainConsistencyPredicates}.
  * It creates the persistent versions of new domain classes and predicates that
  * have been detected in the code, and deletes old ones that have been removed.
+ * 
+ * @author João Neves - JoaoRoxoNeves@ist.utl.pt
  **/
 @NoDomainMetaObjects
 public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
@@ -43,6 +46,15 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 	checkIfIsSingleton();
     }
 
+    /**
+     * Verifies that there is no existing DomainFenixFrameworkRoot object.
+     * Throws an {@link Error} otherwise. Used during the constructor of a new
+     * <code>DomainFenixFrameworkRoot</code> object.
+     * 
+     * @throws Error
+     *             if a <code>DomainFenixFrameworkRoot</code> object already
+     *             exists.
+     */
     private void checkIfIsSingleton() {
 	if (FenixFramework.getDomainFenixFrameworkRoot() != null
 		&& FenixFramework.getDomainFenixFrameworkRoot() != this) {
@@ -54,6 +66,10 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 	return existingDomainMetaClasses.get(domainClass);
     }
 
+    /**
+     * Removes a {@link DomainMetaClass} from the domain relation of existing
+     * meta classes.
+     */
     @Override
     public void removeDomainMetaClasses(DomainMetaClass metaClass) {
 	checkFrameworkNotInitialized();
@@ -65,6 +81,14 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 	super.removeDomainMetaClasses(metaClass);
     }
 
+    /**
+     * Checks that the {@link FenixFramework} is not initialized, throws an
+     * exception otherwise. Should be called before any changes are made to
+     * {@link DomainMetaClass}es or to {@link DomainConsistencyPredicate}s.
+     * 
+     * @throws RuntimeException
+     *             if the framework was already initialized
+     */
     private void checkFrameworkNotInitialized() {
 	if (FenixFramework.isInitialized()) {
 	    throw new RuntimeException("Instances of " + getClass().getSimpleName()
@@ -72,6 +96,10 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 	}
     }
 
+    /**
+     * Adds a {@link DomainMetaClass} to the domain relation of existing meta
+     * classes.
+     */
     @Override
     public void addDomainMetaClasses(DomainMetaClass metaClass) {
 	checkFrameworkNotInitialized();
@@ -82,18 +110,34 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 	super.addDomainMetaClasses(metaClass);
     }
 
-    // Init methods called during the FenixFramework init
+    /**
+     * Entry point of the initialization of the
+     * <code>DomainFenixFrameworkRoot</code>, which initializes the
+     * {@link DomainMetaClass}es and the {@link DomainConsistencyPredicate}s. If
+     * the framework was configured not to create meta objects, it deletes all
+     * {@link DomainMetaClass}es and {@link DomainConsistencyPredicate}s
+     * instead.
+     */
     public void initialize(DomainModel domainModel) {
 	checkFrameworkNotInitialized();
 	if (FenixFramework.canCreateDomainMetaObjects()) {
 	    initializeDomainMetaClasses(domainModel);
 	    initializeDomainConsistencyPredicates();
 	} else {
-	    deleteAllMetaData();
+	    deleteAllMetaObjectsAndClasses();
 	}
     }
 
-    // Init methods for DomainMetaClasses
+    /**
+     * Initializes all the {@link DomainMetaClass}es by inspecting the domain
+     * model.<br>
+     * Identifies and processes:
+     * <ul>
+     * <li>old meta classes that no longer exist</li>
+     * <li>existing meta classes that still exist</li>
+     * <li>new meta classes that did not exist before</li>
+     * </ul>
+     */
     private void initializeDomainMetaClasses(DomainModel domainModel) {
 	existingDMLDomainClasses = getExistingDomainClasses(domainModel);
 	Set<DomainMetaClass> oldMetaClassesToRemove = new HashSet<DomainMetaClass>();
@@ -114,21 +158,24 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 	    processOldClasses(oldMetaClassesToRemove);
 	}
 
-	Set<DomainMetaClass> existingMetaClassesToUpdate = new TreeSet<DomainMetaClass>(
-		DomainMetaClass.COMPARATOR_BY_CLASS_HIERARCHY_TOP_DOWN);
-	existingMetaClassesToUpdate.addAll(existingDomainMetaClasses.values());
-	if (!existingMetaClassesToUpdate.isEmpty()) {
-	    processExistingMetaClasses(existingMetaClassesToUpdate);
+	if (!existingDomainMetaClasses.values().isEmpty()) {
+	    processExistingMetaClasses(existingDomainMetaClasses.values());
 	}
 
-	Set<Class<? extends AbstractDomainObject>> newClassesToAdd = new HashSet<Class<? extends AbstractDomainObject>>(
-		existingDMLDomainClasses.keySet());
-	newClassesToAdd.removeAll(existingDomainMetaClasses.keySet());
-	if (!newClassesToAdd.isEmpty()) {
-	    processNewClasses(newClassesToAdd);
+	Set<Class<? extends AbstractDomainObject>> newClassesToAddTopDown = new TreeSet<Class<? extends AbstractDomainObject>>(
+		DomainMetaClass.COMPARATOR_BY_CLASS_HIERARCHY_TOP_DOWN);
+	newClassesToAddTopDown.addAll(existingDMLDomainClasses.keySet());
+	newClassesToAddTopDown.removeAll(existingDomainMetaClasses.keySet());
+	if (!newClassesToAddTopDown.isEmpty()) {
+	    processNewClasses(newClassesToAddTopDown);
 	}
     }
 
+    /**
+     * @return a <code>Map</code> of <code>Classes</code> to {@link DomainClass}
+     *         with all the existing classes of the domain model, except those
+     *         annotated with {@link NoDomainMetaObjects}.
+     */
     private Map<Class<? extends AbstractDomainObject>, DomainClass> getExistingDomainClasses(DomainModel domainModel) {
 	Map<Class<? extends AbstractDomainObject>, DomainClass> existingDomainClasses = new HashMap<Class<? extends AbstractDomainObject>, DomainClass>();
 	Iterator<DomainClass> domainClassesIterator = domainModel.getClasses();
@@ -149,20 +196,52 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 	}
     }
 
-    private void processOldClasses(Collection<DomainMetaClass> oldMetaClassesToRemove) {
-	deleteOldMetaClasses(oldMetaClassesToRemove);
+    /**
+     * Processes the {@link DomainMetaClass}es that no longer exist in the
+     * domain model, and invokes their deletion.
+     * 
+     * @param oldMetaClassesToProcess
+     *            the <code>Collection</code> of {@link DomainMetaClass}es to be
+     *            processed
+     */
+    private void processOldClasses(Collection<DomainMetaClass> oldMetaClassesToProcess) {
+	deleteOldMetaClasses(oldMetaClassesToProcess);
     }
 
+    /**
+     * Deletes a <code>Collection</code> of {@link DomainMetaClass}es.
+     * 
+     * @param oldMetaClassesToRemove
+     *            the <code>Collection</code> of {@link DomainMetaClass}es to be
+     *            deleted
+     */
     private void deleteOldMetaClasses(Collection<DomainMetaClass> oldMetaClassesToRemove) {
 	for (DomainMetaClass metaClass : oldMetaClassesToRemove) {
 	    metaClass.delete();
 	}
     }
 
-    private void processExistingMetaClasses(Collection<DomainMetaClass> existingMetaClassesToUpdate) {
-	updateExistingMetaClasses(existingMetaClassesToUpdate);
+    /**
+     * Processes the {@link DomainMetaClass}es that still exist in the domain
+     * model, and invokes their update.
+     * 
+     * @param existingMetaClassesToProcess
+     *            the <code>Collection</code> of {@link DomainMetaClass}es to be
+     *            processed
+     */
+    private void processExistingMetaClasses(Collection<DomainMetaClass> existingMetaClassesToProcess) {
+	updateExistingMetaClasses(existingMetaClassesToProcess);
     }
 
+    /**
+     * Updates a <code>Collection</code> of {@link DomainMetaClass}es.<br>
+     * Each {@link DomainMetaClass} whose superclass changed will be deleted, so
+     * that it can be reprocessed later as a new meta class.
+     * 
+     * @param existingMetaClassesToUpdate
+     *            the <code>Collection</code> of {@link DomainMetaClass}es to be
+     *            updated
+     */
     private void updateExistingMetaClasses(Collection<DomainMetaClass> existingMetaClassesToUpdate) {
 	for (DomainMetaClass metaClass : existingMetaClassesToUpdate) {
 	    if (!metaClass.hasDomainMetaSuperclass()) {
@@ -185,11 +264,19 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 	}
     }
 
+    /**
+     * @return true if the {@link DomainMetaClass} has a superclass in the
+     *         domain model
+     */
     private boolean hasSuperclassInDML(DomainMetaClass metaClass) {
 	DomainClass dmlDomainSuperclass = (DomainClass) existingDMLDomainClasses.get(metaClass.getDomainClass()).getSuperclass();
 	return (dmlDomainSuperclass != null);
     }
 
+    /**
+     * @return the {@link DomainMetaClass} of the superclass of the metaClass
+     *         passed as argument
+     */
     private DomainMetaClass getDomainMetaSuperclassFromDML(DomainMetaClass metaClass) {
 	try {
 	    DomainClass dmlDomainSuperclass = (DomainClass) existingDMLDomainClasses.get(metaClass.getDomainClass())
@@ -203,42 +290,65 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 	}
     }
 
-    private void processNewClasses(Collection<Class<? extends AbstractDomainObject>> newClassesToAdd) {
-	createNewMetaClasses(newClassesToAdd);
+    /**
+     * Processes the Classes that did not exist before in the domain model, and
+     * invokes the creation of new {@link DomainMetaClass}es.<br>
+     * The <code>Collection</code> of <code>Classes</code> passed as argument
+     * MUST BE SORTED by the top-down order of their hierarchies. In this
+     * <code>Collection</code> a superclass must always appear before all of its
+     * subclasses.
+     * 
+     * @param newClassesToProcessTopDown
+     *            the <code>Collection</code> of <code>Classes</code> to be
+     *            processed, in top-down order of the class hiearchy
+     */
+    private void processNewClasses(Collection<Class<? extends AbstractDomainObject>> newClassesToProcessTopDown) {
+	createNewMetaClasses(newClassesToProcessTopDown);
     }
 
-    private void createNewMetaClasses(Collection<Class<? extends AbstractDomainObject>> newClassesToAdd) {
-	Set<DomainMetaClass> createdMetaClasses = new TreeSet<DomainMetaClass>(
-		DomainMetaClass.COMPARATOR_BY_CLASS_HIERARCHY_TOP_DOWN);
-	for (Class<? extends AbstractDomainObject> domainClass : newClassesToAdd) {
-	    DomainMetaClass newDomainMetaClass = new DomainMetaClass(domainClass);
-	    createdMetaClasses.add(newDomainMetaClass);
-	}
-
-	for (DomainMetaClass metaClass : createdMetaClasses) {
+    /**
+     * Creates a {@link DomainMetaClass} for each new Class. For each new
+     * {@link DomainMetaClass}, initializes its meta-superclass, and its list of
+     * existing objects.
+     * 
+     * @param existingMetaClassesToUpdate
+     *            the <code>Collection</code> of Classes for which to create
+     *            {@link DomainMetaClass}es
+     */
+    private void createNewMetaClasses(Collection<Class<? extends AbstractDomainObject>> newClassesToAddTopDown) {
+	for (Class<? extends AbstractDomainObject> domainClass : newClassesToAddTopDown) {
+	    // Commits the current, and starts a new write transaction.
+	    // This is necessary to split the load of the mass creation of DomainMetaObjects among several transactions.
+	    // Each transaction fully processes one DomainMetaClass.
 	    Transaction.beginTransaction();
-	    if (hasSuperclassInDML(metaClass)) {
-		metaClass.initDomainMetaSuperclass(getDomainMetaSuperclassFromDML(metaClass));
+	    DomainMetaClass newDomainMetaClass = new DomainMetaClass(domainClass);
+	    if (hasSuperclassInDML(newDomainMetaClass)) {
+		newDomainMetaClass.initDomainMetaSuperclass(getDomainMetaSuperclassFromDML(newDomainMetaClass));
 	    }
-	    metaClass.initExistingDomainObjects();
+	    newDomainMetaClass.initExistingDomainObjects();
 	}
     }
 
-    // End of init methods for DomainMetaClasses
-
-    // Init methods for DomainConsistencyPredicates
+    /**
+     * Initializes all the {@link DomainConsistencyPredicate}s by inspecting the
+     * domain Classes.<br>
+     * Identifies and processes:
+     * <ul>
+     * <li>new predicates that did not exist before</li>
+     * <li>old predicates that no longer exist</li>
+     * <li>existing predicates that still exist</li>
+     * </ul>
+     */
     private void initializeDomainConsistencyPredicates() {
 	Set<Method> newPredicatesToAdd = new HashSet<Method>();
 	Set<DomainConsistencyPredicate> oldPredicatesToRemove = new HashSet<DomainConsistencyPredicate>();
 	Map<Method, DomainConsistencyPredicate> existingDomainPredicates = new HashMap<Method, DomainConsistencyPredicate>();
 
-	Set<DomainMetaClass> existingMetaClassesSorted = new TreeSet<DomainMetaClass>(
-		DomainMetaClass.COMPARATOR_BY_CLASS_HIERARCHY_TOP_DOWN);
-	existingMetaClassesSorted.addAll(existingDomainMetaClasses.values());
-	for (DomainMetaClass metaClass : existingMetaClassesSorted) {
-
+	Set<DomainMetaClass> existingMetaClassesTopDown = new TreeSet<DomainMetaClass>(
+		DomainMetaClass.COMPARATOR_BY_META_CLASS_HIERARCHY_TOP_DOWN);
+	existingMetaClassesTopDown.addAll(existingDomainMetaClasses.values());
+	for (DomainMetaClass metaClass : existingMetaClassesTopDown) {
 	    Set<Method> existingPredicates = getDeclaredConsistencyPredicateMethods(metaClass);
-
 	    for (DomainConsistencyPredicate declaredConsistencyPredicate : metaClass.getDeclaredConsistencyPredicates()) {
 		Method predicateMethod = declaredConsistencyPredicate.getPredicate();
 		if ((predicateMethod == null)
@@ -268,6 +378,16 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 	}
     }
 
+    /**
+     * @param metaClass
+     *            the {@link DomainMetaClass} in which to look for consistency
+     *            predicates
+     * @return A <code>Set</code> of <code>Methods</code> annotated with
+     *         {@link ConsistencyPredicate}, declared inside the domain class of
+     *         the given metaClass. Excludes abstract <code>Methods</code>.
+     * @throws Error
+     *             if any predicate found has an invalid signature.
+     */
     private Set<Method> getDeclaredConsistencyPredicateMethods(DomainMetaClass metaClass) {
 	Class<? extends AbstractDomainObject> domainClass = metaClass.getDomainClass();
 	Class<? extends AbstractDomainObject> baseClass = (Class<? extends AbstractDomainObject>) domainClass.getSuperclass();
@@ -276,6 +396,15 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 	return declaredMethods;
     }
 
+    /**
+     * @param domainClass
+     *            the class in which to look for consistency predicates
+     * @return A <code>Set</code> of <code>Methods</code> annotated with
+     *         {@link ConsistencyPredicate}, declared inside the given
+     *         domainClass. Excludes abstract <code>Methods</code>.
+     * @throws Error
+     *             if any predicate found has an invalid signature.
+     */
     private Set<Method> getDeclaredConsistencyPredicateMethods(Class<? extends AbstractDomainObject> domainClass) {
 	Set<Method> declaredMethods = new HashSet<Method>();
 	for (Method predicateMethod : domainClass.getDeclaredMethods()) {
@@ -302,55 +431,143 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 	return declaredMethods;
     }
 
-    private void processNewPredicates(Set<Method> newPredicatesToAdd, DomainMetaClass metaClass) {
-	createAndExecuteNewPredicates(newPredicatesToAdd, metaClass);
+    /**
+     * Processes the new consistency predicates that did not exist before in
+     * this metaClass, and invokes the creation and execution of new
+     * {@link DomainConsistencyPredicate}s.
+     * 
+     * @param metaClass
+     *            the {@link DomainMetaClass} of the domain class that declares
+     *            the predicates to process.
+     * 
+     * @param newPredicatesToProcess
+     *            the <code>Set</code> of <code>Methods</code> annotated with
+     *            {@link ConsistencyPredicate}, declared inside the domain class
+     *            of the given metaClass.
+     */
+    private void processNewPredicates(Set<Method> newPredicatesToProcess, DomainMetaClass metaClass) {
+	createAndExecuteNewPredicates(newPredicatesToProcess, metaClass);
     }
 
+    /**
+     * Creates a {@link DomainConsistencyPredicate} for each new predicate to
+     * add. For each new {@link DomainConsistencyPredicate}, initializes any
+     * possibly overridden predicate at a superclass, and executes the new
+     * predicate for all affected objects. Assumes that the meta classes are
+     * being processed by the top-down order of their hierarchy.
+     * 
+     * @param metaClass
+     *            the {@link DomainMetaClass} of the domain class that declares
+     *            the new predicates to add.
+     * 
+     * @param newPredicatesToAdd
+     *            the <code>Set</code> of new <code>Methods</code> annotated
+     *            with {@link ConsistencyPredicate}, declared inside the domain
+     *            class of the given metaClass.
+     */
     private void createAndExecuteNewPredicates(Set<Method> newPredicatesToAdd, DomainMetaClass metaClass) {
-	Set<DomainConsistencyPredicate> createdPredicates = new HashSet<DomainConsistencyPredicate>();
-
-	// First, create all new predicates
 	for (Method predicateMethod : newPredicatesToAdd) {
-	    createdPredicates.add(DomainConsistencyPredicate.createNewDomainConsistencyPredicate(predicateMethod, metaClass));
-	}
-
-	// Second, initialize each predicate's overridden predicate
-	for (DomainConsistencyPredicate knownConsistencyPredicate : createdPredicates) {
-	    knownConsistencyPredicate.initConsistencyPredicateOverridden();
-	}
-
-	// Third, execute the predicates for the affected classes
-	for (DomainConsistencyPredicate knownConsistencyPredicate : createdPredicates) {
+	    // Commits the current, and starts a new write transaction.
+	    // This is necessary to split the load of the mass creation of DomainDependenceRecords among several transactions.
+	    // Each transaction fully processes one DomainConsistencyPredicate.
 	    Transaction.beginTransaction();
-	    knownConsistencyPredicate.executeConsistencyPredicateForMetaClassAndSubclasses(metaClass);
+	    DomainConsistencyPredicate newConsistencyPredicate = DomainConsistencyPredicate.createNewDomainConsistencyPredicate(
+		    predicateMethod, metaClass);
+	    newConsistencyPredicate.initConsistencyPredicateOverridden();
+	    newConsistencyPredicate.executeConsistencyPredicateForMetaClassAndSubclasses(metaClass);
 	}
     }
 
-    private void processOldPredicates(Set<DomainConsistencyPredicate> oldPredicatesToRemove, final DomainMetaClass metaClass) {
-	deleteOldPredicates(oldPredicatesToRemove, metaClass);
+    /**
+     * Processes the old {@link DomainConsistencyPredicate}s that no longer
+     * exist in this metaClass, and invokes their deletion.
+     * 
+     * @param metaClass
+     *            the {@link DomainMetaClass} of the domain class that used to
+     *            declare the predicates to process.
+     * 
+     * @param oldPredicatesToProcess
+     *            the <code>Set</code> of {@link DomainConsistencyPredicate}s,
+     *            that are no longer being declared inside the domain class of
+     *            the given metaClass.
+     */
+    private void processOldPredicates(Set<DomainConsistencyPredicate> oldPredicatesToProcess, DomainMetaClass metaClass) {
+	deleteOldPredicates(oldPredicatesToProcess, metaClass);
     }
 
+    /**
+     * Deletes the old {@link DomainConsistencyPredicate}s that no longer exist
+     * in this metaClass.
+     * 
+     * @param metaClass
+     *            the {@link DomainMetaClass} of the domain class that used to
+     *            declare the predicates to process.
+     * 
+     * @param oldPredicatesToProcess
+     *            the <code>Set</code> of {@link DomainConsistencyPredicate}s,
+     *            that are no longer being declared inside the domain class of
+     *            the given metaClass.
+     */
     private void deleteOldPredicates(Set<DomainConsistencyPredicate> oldPredicatesToRemove, DomainMetaClass metaClass) {
 	for (DomainConsistencyPredicate knownConsistencyPredicate : oldPredicatesToRemove) {
+	    // Commits the current, and starts a new write transaction.
+	    // This is necessary to split the load of the mass deletion of DomainDependenceRecords among several transactions.
+	    // Each transaction fully processes one DomainConsistencyPredicate.
+	    Transaction.beginTransaction();
 	    knownConsistencyPredicate.delete();
 	}
     }
 
-    private void processExistingPredicates(Collection<DomainConsistencyPredicate> existingKnownPredicates,
+    /**
+     * Processes the {@link DomainConsistencyPredicate}s that still exist in
+     * this metaClass, and invokes their update.
+     * 
+     * @param metaClass
+     *            the {@link DomainMetaClass} of the domain class that declares
+     *            the predicates to process.
+     * 
+     * @param existingPredicatesToProcess
+     *            the <code>Collection</code> of existing
+     *            {@link DomainConsistencyPredicate}s, that are declared inside
+     *            the domain class of the given metaClass.
+     */
+    private void processExistingPredicates(Collection<DomainConsistencyPredicate> existingPredicatesToProcess,
 	    DomainMetaClass metaClass) {
-	updateExistingPredicates(existingKnownPredicates, metaClass);
+	updateExistingPredicates(existingPredicatesToProcess, metaClass);
     }
 
-    private void updateExistingPredicates(Collection<DomainConsistencyPredicate> existingKnownPredicates,
+    /**
+     * Updates the overridden predicate of the
+     * {@link DomainConsistencyPredicate}s that still exist in this metaClass.
+     * This update is required because the predicates of a superclass might have
+     * been changed, or even removed.
+     * 
+     * @param metaClass
+     *            the {@link DomainMetaClass} of the domain class that declares
+     *            the predicates to update.
+     * 
+     * @param existingPredicatesToUpdate
+     *            the <code>Collection</code> of existing
+     *            {@link DomainConsistencyPredicate}s, that are declared inside
+     *            the domain class of the given metaClass.
+     */
+    private void updateExistingPredicates(Collection<DomainConsistencyPredicate> existingPredicatesToUpdate,
 	    DomainMetaClass metaClass) {
-	for (DomainConsistencyPredicate knownConsistencyPredicate : existingKnownPredicates) {
+	for (DomainConsistencyPredicate knownConsistencyPredicate : existingPredicatesToUpdate) {
 	    knownConsistencyPredicate.updateConsistencyPredicateOverridden();
 	}
     }
-    // End of init methods for DomainConsistencyPredicates
 
-    private void deleteAllMetaData() {
+    /**
+     * Deletes all the {@link DomainMetaClass}es and {@link DomainMetaObject}s,
+     * and any associated {@link DomainConsistencyPredicate}s and {@link DomainDependenceRecord}s.
+     * This method should be invoked when the {@link FenixFramework} is configured not to create meta objects.
+     */
+    private void deleteAllMetaObjectsAndClasses() {
 	for (DomainMetaClass metaClass : getDomainMetaClasses()) {
+	    // Commits the current, and starts a new write transaction.
+	    // This is necessary to split the load of the mass deletion of objects among several transactions.
+	    // Each transaction fully processes one DomainMetaClass.
 	    Transaction.beginTransaction();
 	    metaClass.massDelete();
 	}

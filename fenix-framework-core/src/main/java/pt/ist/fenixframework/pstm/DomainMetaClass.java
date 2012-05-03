@@ -31,6 +31,8 @@ import dml.runtime.RelationAdapter;
  * Each DomainMetaClass stores a set of all existing {@link DomainMetaObject}s
  * of it's class. Furthermore, a DomainMetaClass contains a set of all
  * {@link DomainConsistencyPredicate}s that are declared in its code.
+ * 
+ * @author João Neves - JoaoRoxoNeves@ist.utl.pt
  **/
 @NoDomainMetaObjects
 public class DomainMetaClass extends DomainMetaClass_Base {
@@ -55,19 +57,36 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 	});
     }
 
-    public static Comparator<DomainMetaClass> COMPARATOR_BY_CLASS_HIERARCHY_TOP_DOWN = new Comparator<DomainMetaClass>() {
+    public static Comparator<Class<? extends AbstractDomainObject>> COMPARATOR_BY_CLASS_HIERARCHY_TOP_DOWN = new Comparator<Class<? extends AbstractDomainObject>>() {
+	@Override
+	public int compare(Class<? extends AbstractDomainObject> class1, Class<? extends AbstractDomainObject> class2) {
+	    if (class1.equals(class2)) {
+		return 0;
+	    }
+	    if (class1.isAssignableFrom(class2)) {
+		return -1;
+	    }
+	    if (class2.isAssignableFrom(class1)) {
+		return 1;
+	    }
+	    return getHierarchyName(class1).compareTo(getHierarchyName(class2));
+	}
+    };
+
+    private static String getHierarchyName(Class<?> class1) {
+	if (class1.equals(OneBoxDomainObject.class)) {
+	    return "";
+	}
+	return getHierarchyName(class1.getSuperclass()) + "<-" + class1.getName();
+    }
+
+    public static Comparator<DomainMetaClass> COMPARATOR_BY_META_CLASS_HIERARCHY_TOP_DOWN = new Comparator<DomainMetaClass>() {
 	@Override
 	public int compare(DomainMetaClass metaClass1, DomainMetaClass metaClass2) {
 	    if (metaClass1 == metaClass2) {
 		return 0;
 	    }
-	    if (metaClass1.getDomainClass().isAssignableFrom(metaClass2.getDomainClass())) {
-		return -1;
-	    }
-	    if (metaClass2.getDomainClass().isAssignableFrom(metaClass1.getDomainClass())) {
-		return 1;
-	    }
-	    return metaClass1.getDomainClass().toString().compareTo(metaClass2.getDomainClass().toString());
+	    return COMPARATOR_BY_CLASS_HIERARCHY_TOP_DOWN.compare(metaClass1.getDomainClass(), metaClass2.getDomainClass());
 	}
     };
 

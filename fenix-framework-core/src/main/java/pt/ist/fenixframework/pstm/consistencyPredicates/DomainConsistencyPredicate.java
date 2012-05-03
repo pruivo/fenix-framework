@@ -22,6 +22,8 @@ import pt.ist.fenixframework.pstm.Transaction;
  * storing which predicates are known and by detecting which predicates exist in
  * the code, we can determine which predicates are new, and which have been
  * removed.
+ * 
+ * @author João Neves - JoaoRoxoNeves@ist.utl.pt
  **/
 @NoDomainMetaObjects
 public abstract class DomainConsistencyPredicate extends DomainConsistencyPredicate_Base {

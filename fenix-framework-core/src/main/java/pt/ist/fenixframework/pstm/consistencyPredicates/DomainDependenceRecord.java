@@ -16,6 +16,8 @@ import pt.ist.fenixframework.pstm.NoDomainMetaObjects;
  * DomainDependenceRecord has a set of depended {@link DomainMetaObject}s, that
  * represent the domain objects that were read to execute the consistency
  * predicate.
+ * 
+ * @author João Neves - JoaoRoxoNeves@ist.utl.pt
  **/
 @NoDomainMetaObjects
 public class DomainDependenceRecord extends DomainDependenceRecord_Base implements

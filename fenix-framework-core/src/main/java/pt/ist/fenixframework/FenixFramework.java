@@ -3,6 +3,8 @@ package pt.ist.fenixframework;
 import jvstm.TransactionalCommand;
 import pt.ist.fenixframework.pstm.DataAccessPatterns;
 import pt.ist.fenixframework.pstm.DomainFenixFrameworkRoot;
+import pt.ist.fenixframework.pstm.DomainMetaClass;
+import pt.ist.fenixframework.pstm.DomainMetaObject;
 import pt.ist.fenixframework.pstm.MetadataManager;
 import pt.ist.fenixframework.pstm.PersistentRoot;
 import pt.ist.fenixframework.pstm.Transaction;
@@ -55,8 +57,9 @@ public class FenixFramework {
 		throw new Error("Fenix framework already initialized");
 	    }
 
-	    initDomainFenixFrameworkRoot();
 	    PersistentRoot.initRootIfNeeded(config);
+	    initDomainFenixFrameworkRoot();
+
 	    FenixFrameworkPlugin[] plugins = config.getPlugins();
 	    if (plugins != null) {
 		for (final FenixFrameworkPlugin plugin : plugins) {
@@ -74,10 +77,18 @@ public class FenixFramework {
 	}
     }
 
+    /**
+     * @return <code>true</code> if the framework was already initialized. <br>
+     *         <code>false</code> if the initialization is still in progress.
+     */
     public static boolean isInitialized() {
 	return initialized;
     }
 
+    /**
+     * Creates a {@link PersistentRoot} for the {@link DomainFenixFrameworkRoot}
+     * and then initializes the {@link DomainFenixFrameworkRoot}.
+     */
     private static void initDomainFenixFrameworkRoot() {
 	Transaction.withTransaction(new TransactionalCommand() {
 	    @Override
@@ -112,6 +123,14 @@ public class FenixFramework {
 	return (T) PersistentRoot.getRoot();
     }
 
+    /**
+     * Indicates whether the framework was configured to allow the automatic
+     * creation of {@link DomainMetaObject}s and {@link DomainMetaClass}es. Only
+     * if this method returns <code>true</code> will a consistency predicate of
+     * a domain object be allowed to read values from other objects.
+     * 
+     * @return the value of {@link Config}.canCreateDomainMetaObjects
+     */
     public static boolean canCreateDomainMetaObjects() {
 	return getConfig().canCreateDomainMetaObjects;
     }
