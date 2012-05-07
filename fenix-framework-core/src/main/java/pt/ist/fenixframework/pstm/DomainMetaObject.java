@@ -3,16 +3,21 @@ package pt.ist.fenixframework.pstm;
 import java.util.Set;
 
 import jvstm.cps.Depended;
+import pt.ist.fenixframework.Config;
 import pt.ist.fenixframework.pstm.consistencyPredicates.DomainDependenceRecord;
 
 /**
- * Each domain object is associated with one DomainMetaObject, which is a
- * representation of the domainObject inside the fenix-framework's own domain.
- * The DomainMetaObject is created when the domain object is created.
+ * Each domain object is associated with one <code>DomainMetaObject</code>,
+ * which is a representation of the domain object inside the fenix-framework
+ * domain. The <code>DomainMetaObject</code> is created when the domain object
+ * is created.<br>
  * 
- * The DomainMetaObject stores all the dependencies to this domainObject from
- * {@link DomainDependenceRecord}s, and the the domain object's
- * {@link DomainMetaClass}.
+ * The <code>DomainMetaObject</code> stores the object's {@link DomainMetaClass}
+ * and all its dependencies as {@link DomainDependenceRecord}s. The object's
+ * <strong>own</strong> dependence records point to other objects on which the
+ * consistency of this object depends. The object's <strong>depending</strong>
+ * dependence records point to the other objects whose consistency depends on
+ * this object.
  * 
  * @author João Neves - JoaoRoxoNeves@ist.utl.pt
  **/
@@ -24,28 +29,46 @@ public class DomainMetaObject extends DomainMetaObject_Base implements Depended<
     }
 
     /**
+     * Deletes this <code>DomainMetaObject</code>, and all the object's own
+     * {@link DomainDependenceRecord}s. It also removes the dependencies of
+     * other objects to this object.<br>
+     * 
      * A DomainMetaObject should be deleted only when the associated DO is being
      * deleted. Therefore, we can remove it from its metaClass' existing objects
-     * list.
+     * list.<br>
      * 
-     * Also, the DO is no longer connected to other objects. Thus, the only
-     * DependenceRecords that will still depend on this DO are those defined by
-     * it's own ConsistencyPredicates. These DependenceRecords should also be
-     * deleted.
+     * <strong>This method assumes that a deleted object is no longer connected
+     * to other objects. Therefore, the parameter
+     * {@link Config#errorfIfDeletingObjectNotDisconnected} MUST be set to
+     * true.</strong><br>
+     * 
+     * Because all relations are bidireccional, the transaction that disconnects
+     * this object from all its relations will have all of the objects at the
+     * end of those relations in its write set. Thus, removing the
+     * <strong>depending</strong> dependence records will not prevent this
+     * transaction from aborting, in case any other object's consistency depends
+     * on the existence of this object.
      **/
     protected void delete() {
 	removeDomainMetaClass();
 
+	// Removes the dependencies from other objects.
+	// If the object was disconnected from all relations, any depending objects
+	// will be checked at the objects on the other side of the relations. 
 	for (DomainDependenceRecord dependingDependenceRecord : getDependingDependenceRecords()) {
 	    removeDependingDependenceRecords(dependingDependenceRecord);
 	}
+
+	// Removes this objects own records, of its own predicates.
+	// The object is being deleted, so it no longer has to be consistent.
 	for (DomainDependenceRecord ownDependenceRecord : getOwnDependenceRecords()) {
 	    ownDependenceRecord.delete();
 	}
 
+	// Removes the relation to the AbstractDomainObject that this meta object used to represent.
 	removeDomainObject();
 
-	//Deletes THIS metaObject, which is also a Fenix-Framework DomainObject
+	// Deletes THIS metaObject, which is also a fenix-framework DomainObject.
 	deleteDomainObject();
     }
 

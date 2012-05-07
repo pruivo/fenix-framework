@@ -198,7 +198,13 @@ public class Config {
      * should automatically create {@link DomainMetaObject}s and
      * {@link DomainMetaClass}es. Only if the value is true will a consistency
      * predicate of a domain object be allowed to read values from other
-     * objects. The default value is false.
+     * objects. The default value is false.<br>
+     * 
+     * If this parameter is set to true, then,
+     * {@link Config#errorfIfDeletingObjectNotDisconnected} must also be set to
+     * true.
+     * 
+     * @see DomainMetaObject#delete()
      */
     protected boolean canCreateDomainMetaObjects = false;
 
@@ -320,6 +326,20 @@ public class Config {
 
     public String getCollectDataAccessPatternsPath() {
 	return collectDataAccessPatternsPath;
+    }
+
+    /**
+     * Checks that, if the parameter <code>canCreateDomainMetaObjects</code> is
+     * set to true, then <code>errorfIfDeletingObjectNotDisconnected</code> is
+     * also set to true.
+     * 
+     * @see DomainMetaObject#delete()
+     */
+    public void checkIsValid() {
+	if ((canCreateDomainMetaObjects) && (!errorfIfDeletingObjectNotDisconnected)) {
+	    throw new Error(
+		    "If the parameter canCreateDomainMetaObjects is set to true, then errorfIfDeletingObjectNotDisconnected must also be set to true.");
+	}
     }
 
 }

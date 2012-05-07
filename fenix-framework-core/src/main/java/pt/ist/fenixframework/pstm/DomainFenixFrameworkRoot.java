@@ -19,7 +19,7 @@ import dml.DomainModel;
 
 /**
  * The <code>DomainFenixFrameworkRoot</code> is a singleton root object that is
- * related to all the {@link DomainMetaClass}es in the system.
+ * related to all the {@link DomainMetaClass}es in the system.<br>
  * 
  * The initialize method is called during the initialization of the
  * {@link FenixFramework}. This method is responsible for the initialization of

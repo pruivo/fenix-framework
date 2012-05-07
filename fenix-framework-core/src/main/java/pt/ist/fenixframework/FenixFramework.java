@@ -32,7 +32,9 @@ public class FenixFramework {
     private static Config config;
 
     public static void initialize(Config config) {
-        bootStrap(config);
+	config.checkIsValid();
+
+	bootStrap(config);
         initialize();
     }
 
@@ -57,8 +59,8 @@ public class FenixFramework {
 		throw new Error("Fenix framework already initialized");
 	    }
 
-	    PersistentRoot.initRootIfNeeded(config);
 	    initDomainFenixFrameworkRoot();
+	    PersistentRoot.initRootIfNeeded(config);
 
 	    FenixFrameworkPlugin[] plugins = config.getPlugins();
 	    if (plugins != null) {
