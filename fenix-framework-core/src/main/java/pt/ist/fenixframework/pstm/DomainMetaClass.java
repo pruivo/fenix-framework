@@ -22,12 +22,12 @@ import dml.runtime.RelationAdapter;
 
 /**
  * A <code>DomainMetaClass</code> is the domain entity that represents a class
- * existing in the application's domain model, declared in the DML.
+ * existing in the application's domain model, declared in the DML.<br>
  * 
  * These DomainMetaClasses are created or deleted only during the
  * {@link FenixFramework} initialization. A <code>DomainMetaClass</code> is
  * linked to one superclass and many subclasses, which are also
- * <code>DomainMetaClasses</code>.
+ * <code>DomainMetaClasses</code>.<br>
  * 
  * Each <code>DomainMetaClass</code> stores a set of all existing
  * {@link DomainMetaObject}s of it's class. Furthermore, a
