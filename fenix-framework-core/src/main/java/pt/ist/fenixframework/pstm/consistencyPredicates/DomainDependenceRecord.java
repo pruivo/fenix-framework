@@ -11,11 +11,12 @@ import pt.ist.fenixframework.pstm.DomainMetaObject;
 import pt.ist.fenixframework.pstm.NoDomainMetaObjects;
 
 /**
- * A DomainDependenceRecord represents the result of the execution of a
- * consistency predicate method for one domain object instance. The
- * DomainDependenceRecord has a set of depended {@link DomainMetaObject}s, that
- * represent the domain objects that were read to execute the consistency
- * predicate.
+ * A <code>DomainDependenceRecord</code> represents the result of the execution
+ * of a consistency predicate method for a dependent domain object. The
+ * <code>DomainDependenceRecord</code> has a set of depended
+ * {@link DomainMetaObject}s, that represent the domain objects that were read
+ * to execute the consistency predicate. If any of these objects is modified,
+ * the consistency predicate must be reexecuted.
  * 
  * @author João Neves - JoaoRoxoNeves@ist.utl.pt
  **/
@@ -44,15 +45,22 @@ public class DomainDependenceRecord extends DomainDependenceRecord_Base implemen
 	setConsistent(consistent);
     }
 
+    /**
+     * Sets this <code>DomainDependenceRecord</code> as being consistent, or
+     * inconsistent. Also updates the <code>inconsistentDependenceRecords</code>
+     * relation to the {@link DomainConsistencyPredicate}.<br>
+     * This method should only be invoked after the execution of a consistency
+     * predicate.
+     */
     @Override
     public void setConsistent(Boolean consistent) {
 	if (consistent) {
-	    if ((getConsistent() != null) && !isConsistent()) {
+	    if ((isConsistent() != null) && !isConsistent()) {
 		// Setting to consistent after being inconsistent
 		getDomainConsistencyPredicate().removeInconsistentDependenceRecords(this);
 	    }
 	} else {
-	    if ((getConsistent() == null) || isConsistent()) {
+	    if ((isConsistent() == null) || isConsistent()) {
 		// Setting to inconsistent after being consistent, or for the first time
 		getDomainConsistencyPredicate().addInconsistentDependenceRecords(this);
 	    }
@@ -60,18 +68,22 @@ public class DomainDependenceRecord extends DomainDependenceRecord_Base implemen
 	super.setConsistent(consistent);
     }
 
-    public boolean isConsistent() {
+    public Boolean isConsistent() {
 	return getConsistent();
     }
 
     /**
-     * A DependenceRecord can be deleted in two cases:
-     * 
-     * 1 - When the dependentDO is being deleted. In this case, the DO's
-     * metaObject will also be deleted, and will therefore call this method.
-     * 
-     * 2 - The ConsistencyPredicate was removed from the code. In this case, we
-     * only remove the link to all the metaObjects, which are not deleted.
+     * Deletes this <code>DomainDependenceRecord</code> after disconnecting it
+     * from all relations.<br>
+     * A <code>DomainDependenceRecord</code> can be deleted in two cases:
+     * <ul>
+     * <li>When the dependent object is being deleted. In this case, its
+     * {@link DomainMetaObject} will also be deleted, and will therefore invoke
+     * this method.</li>
+     * <li>The {@link DomainConsistencyPredicate} was removed from the code. In
+     * this case, we only remove the link to all the meta objects, which are not
+     * deleted.</li>
+     * </ul>
      **/
     public void delete() {
 	for (DomainMetaObject dependedMetaObject : getDependedDomainMetaObjects()) {

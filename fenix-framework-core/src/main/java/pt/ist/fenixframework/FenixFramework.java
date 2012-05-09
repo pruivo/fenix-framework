@@ -81,7 +81,8 @@ public class FenixFramework {
 
     /**
      * @return <code>true</code> if the framework was already initialized. <br>
-     *         <code>false</code> if the initialization is still in progress.
+     *         <code>false</code> if the framework was not yet initialized, or
+     *         the initialization is still in progress.
      */
     public static boolean isInitialized() {
 	return initialized;
