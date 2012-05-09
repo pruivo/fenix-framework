@@ -44,17 +44,17 @@ public class DomainMetaObject extends DomainMetaObject_Base implements Depended<
      * 
      * Because all relations are bidireccional, the transaction that disconnects
      * this object from all its relations will have all of the objects at the
-     * end of those relations in its write set. Thus, removing the
-     * <strong>depending</strong> dependence records will not prevent this
-     * transaction from aborting, in case any other object's consistency depends
-     * on the existence of this object.
+     * end of those relations in its write set. Thus, if any other object's
+     * consistency depends on the existence of this object, its consistency
+     * predicate will still be checked, even after removing the
+     * <strong>depending</strong> dependence records of this object.
      **/
     protected void delete() {
 	removeDomainMetaClass();
 
 	// Removes the dependencies from other objects.
-	// If the object was disconnected from all relations, any depending objects
-	// will be checked at the objects on the other side of the relations. 
+	// Because the object was disconnected from all relations, any depending objects
+	// will be checked by the objects on the other side of the relations. 
 	for (DomainDependenceRecord dependingDependenceRecord : getDependingDependenceRecords()) {
 	    removeDependingDependenceRecords(dependingDependenceRecord);
 	}
