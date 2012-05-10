@@ -453,8 +453,9 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
      * Creates a {@link DomainConsistencyPredicate} for each new predicate to
      * add. For each new {@link DomainConsistencyPredicate}, initializes any
      * possibly overridden predicate at a superclass, and executes the new
-     * predicate for all affected objects. Assumes that the meta classes are
-     * being processed by the top-down order of their hierarchy.
+     * predicate for all affected objects.<br>
+     * <strong>Assumes that the meta classes are being processed by the top-down
+     * order of their hierarchy.</strong>
      * 
      * @param metaClass
      *            the {@link DomainMetaClass} of the domain class that declares

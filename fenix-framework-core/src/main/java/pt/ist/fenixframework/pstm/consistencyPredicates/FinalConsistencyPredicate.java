@@ -6,14 +6,15 @@ import pt.ist.fenixframework.pstm.DomainMetaClass;
 import pt.ist.fenixframework.pstm.NoDomainMetaObjects;
 
 /**
- * A FinalConsistencyPredicate is a {@link PublicConsistencyPredicate} that
- * represents predicate methods that are either public or protected, and are
- * final. It can override, but cannot be overridden by other
- * {@link PublicConsistencyPredicate}s.
+ * A <code>FinalConsistencyPredicate</code> is a
+ * {@link PublicConsistencyPredicate} that represents a predicate method that is
+ * either public or protected, and is final. It can override other
+ * {@link PublicConsistencyPredicate}s, but cannot be overridden.
  * 
- * Therefore, on creation, unlike the {@link PublicConsistencyPredicate}, the
- * execution of the new {@link PublicConsistencyPredicate} does not need to
- * check subclasses for overriding methods.
+ * Therefore, during the initialization, unlike the
+ * {@link PublicConsistencyPredicate}, the execution of a new
+ * <code>FinalConsistencyPredicate</code> does not need to check subclasses for
+ * overriding methods.
  * 
  * @author João Neves - JoaoRoxoNeves@ist.utl.pt
  **/
@@ -32,6 +33,15 @@ public class FinalConsistencyPredicate extends FinalConsistencyPredicate_Base {
 	return true;
     }
 
+    /**
+     * Executes this consistency predicate for all objects of the given
+     * {@link DomainMetaClass}, and all objects of subclasses. Because the
+     * predicate is final, it cannot be overridden at any subclass.
+     * 
+     * @param metaClass
+     *            the {@link DomainMetaClass} for which to execute this
+     *            predicate.
+     */
     @Override
     public void executeConsistencyPredicateForMetaClassAndSubclasses(DomainMetaClass metaClass) {
 	executeConsistencyPredicateForExistingDomainObjects(metaClass.getExistingDomainObjects());
