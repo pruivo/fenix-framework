@@ -9,17 +9,19 @@ import pt.ist.fenixframework.pstm.DomainMetaClass;
 import pt.ist.fenixframework.pstm.NoDomainMetaObjects;
 
 /**
- * A PublicConsistencyPredicate is a {@link DomainConsistencyPredicate} that
- * represents predicate methods that are either public or protected. It can
- * override and be overridden by other PublicConsistencyPredicates.
+ * A <code>PublicConsistencyPredicate</code> is a
+ * {@link DomainConsistencyPredicate} that represents a predicate method that is
+ * either public or protected. It can override and be overridden by other
+ * <code>PublicConsistencyPredicates</code>.
  * 
- * Therefore, on creation, the dependence records of the overridden predicate
- * (if any) are removed from this class downward, and the new
- * PublicConsistencyPredicate is executed for all instances of the declaring
- * domain class and subclasses that do not override the predicate method.
- * Likewise, on deletion, all it's dependence records are removed, and the
- * overridden predicate (if any) is executed for all instances of the declaring
- * domain class and subclasses that do not override the predicate method.
+ * Therefore, during the initialization, the {@link DomainDependenceRecord}s of
+ * the overridden predicate (if any) are removed from this class downwards, and
+ * the new <code>PublicConsistencyPredicate</code> is executed for all instances
+ * of the declaring domain class and subclasses that do not override the
+ * predicate method. Likewise, on deletion, all its
+ * {@link DomainDependenceRecord}s are removed, and the overridden predicate (if
+ * any) is executed for all instances of the declaring domain class and
+ * subclasses that do not override the predicate method.
  * 
  * @author João Neves - JoaoRoxoNeves@ist.utl.pt
  **/
@@ -76,6 +78,12 @@ public class PublicConsistencyPredicate extends PublicConsistencyPredicate_Base 
 	super.removePublicConsistencyPredicatesOverriding(publicConsistencyPredicatesOverriding);
     }
 
+    /**
+     * Finds and initializes the {@link PublicConsistencyPredicate} that is
+     * being overridden by this predicate (if any). If such a predicate is
+     * found, deletes all of that predicate's {@link DomainDependenceRecord}s
+     * from this predicate's class downwards.
+     */
     @Override
     public void initConsistencyPredicateOverridden() {
 	checkFrameworkNotInitialized();
@@ -90,7 +98,11 @@ public class PublicConsistencyPredicate extends PublicConsistencyPredicate_Base 
 	System.out.println("[ConsistencyPredicates] Initializing overridden predicate of " + getPredicate() + " to "
 		+ overriddenPredicate.getPredicate());
     }
-
+    
+    /**
+     * Deletes all of this predicate's {@link DomainDependenceRecord}s from the
+     * given metaClass downwards.
+     */
     private void removeDomainDependenceRecordsForMetaClassAndSubclasses(DomainMetaClass metaClass) {
 	removeDomainDependenceRecordsForExistingDomainObjects(metaClass.getExistingDomainObjects());
 
@@ -99,6 +111,10 @@ public class PublicConsistencyPredicate extends PublicConsistencyPredicate_Base 
 	}
     }
 
+    /**
+     * Deletes this predicate's {@link DomainDependenceRecord}s for given
+     * <code>List</code> of objects.
+     */
     private void removeDomainDependenceRecordsForExistingDomainObjects(List<AbstractDomainObject> existingObjects) {
 	for (DomainDependenceRecord dependenceRecord : getDomainDependenceRecords()) {
 	    if (existingObjects.contains(dependenceRecord.getDependent())) {
@@ -107,6 +123,11 @@ public class PublicConsistencyPredicate extends PublicConsistencyPredicate_Base 
 	}
     }
 
+    /**
+     * Finds and updates the {@link PublicConsistencyPredicate} that is being
+     * overridden by this predicate (if any). Only performs changes if the
+     * current information about the overridden predicate is outdated.
+     */
     @Override
     public void updateConsistencyPredicateOverridden() {
 	checkFrameworkNotInitialized();
@@ -120,6 +141,13 @@ public class PublicConsistencyPredicate extends PublicConsistencyPredicate_Base 
 		+ ((overriddenPredicate == null) ? "null" : overriddenPredicate.getPredicate()));
     }
 
+    /**
+     * Searches the consecutive superclasses of this predicate's class to find
+     * the first predicate that is being overridden.
+     * 
+     * @return the <code>PublicConsistencyPredicate</code> that is being
+     *         directly overridden by this predicate
+     */
     private PublicConsistencyPredicate findOverriddenPredicate() {
 	DomainMetaClass metaSuperclass = getDomainMetaClass().getDomainMetaSuperclass();
 	while (metaSuperclass != null) {
@@ -127,14 +155,17 @@ public class PublicConsistencyPredicate extends PublicConsistencyPredicate_Base 
 	    try {
 		overriddenMethod = metaSuperclass.getDomainClass().getDeclaredMethod(getPredicate().getName());
 	    } catch (NoSuchMethodException e) {
+		// No overridden method found, look in the next superclass
 		metaSuperclass = metaSuperclass.getDomainMetaSuperclass();
 		continue;
 	    }
 	    if (!overriddenMethod.isAnnotationPresent(ConsistencyPredicate.class)
 		    && !overriddenMethod.isAnnotationPresent(jvstm.cps.ConsistencyPredicate.class)) {
+		// Found an overridden method, but it's not a consistency predicate
 		return null;
 	    }
 	    if (Modifier.isPrivate(overriddenMethod.getModifiers())) {
+		// The consistency predicate at the superclass is private, so it is not being overridden.
 		return null;
 	    }
 
@@ -143,6 +174,16 @@ public class PublicConsistencyPredicate extends PublicConsistencyPredicate_Base 
 	return null;
     }
 
+    /**
+     * Executes this consistency predicate for all objects of the given
+     * {@link DomainMetaClass}, and objects of subclasses. The predicate will
+     * NOT be executed for objects of any subclass that overrides this
+     * consistency predicate.
+     * 
+     * @param metaClass
+     *            the {@link DomainMetaClass} for which to execute this
+     *            predicate.
+     */
     @Override
     public void executeConsistencyPredicateForMetaClassAndSubclasses(DomainMetaClass metaClass) {
 	if (metaClass == getDomainMetaClass()) {
@@ -151,19 +192,33 @@ public class PublicConsistencyPredicate extends PublicConsistencyPredicate_Base 
 	} else {
 	    try {
 		metaClass.getDomainClass().getDeclaredMethod(getPredicate().getName());
-		// The method is being overridden from this class downward, so stop and don't search subclasses.
+		// If no exception was thrown, the method is being overridden from this class downward,
+		// so stop and don't search in subclasses.
 		return;
 	    } catch (NoSuchMethodException e) {
-		// The method is not being overridden here, so proceed with the execution.
+		// The method is not being overridden here, so proceed with the execution for this subclass.
 		executeConsistencyPredicateForExistingDomainObjects(metaClass.getExistingDomainObjects());
 	    }
 	}
 
+	// Continue searching in subclasses for overriding predicates
 	for (DomainMetaClass metaSubclass : metaClass.getDomainMetaSubclasses()) {
 	    executeConsistencyPredicateForMetaClassAndSubclasses(metaSubclass);
 	}
     }
 
+    /**
+     * Deletes this <code>PublicConsistencyPredicate</code>.<br>
+     * A <code>PublicConsistencyPredicate</code> should be deleted when the
+     * consistency predicate method is removed from the code, or the containing
+     * class is removed.<br>
+     * 
+     * This method is called when the predicate is being removed, and not the
+     * class. In this case, the previously-overridden predicate must be executed
+     * from this class downwards.
+     * 
+     * @see PublicConsistencyPredicate#classDelete()
+     **/
     @Override
     public void delete() {
 	PublicConsistencyPredicate overriddenPredicate = getPublicConsistencyPredicateOverridden();
@@ -178,6 +233,18 @@ public class PublicConsistencyPredicate extends PublicConsistencyPredicate_Base 
 	classDelete();
     }
 
+    /**
+     * Deletes this <code>PublicConsistencyPredicate</code>.<br>
+     * A <code>PublicConsistencyPredicate</code> should be deleted when the
+     * consistency predicate method is removed from the code, or the containing
+     * class is removed.<br>
+     * 
+     * This method is called when the predicate's class is being removed. In
+     * this case, there is no need to execute the previously-overridden
+     * predicate.
+     * 
+     * @see PublicConsistencyPredicate#delete()
+     **/
     @Override
     public void classDelete() {
 	for (PublicConsistencyPredicate predicatesOverriding : getPublicConsistencyPredicatesOverriding()) {
