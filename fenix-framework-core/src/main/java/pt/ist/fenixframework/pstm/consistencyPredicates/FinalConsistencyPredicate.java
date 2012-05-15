@@ -50,4 +50,12 @@ public class FinalConsistencyPredicate extends FinalConsistencyPredicate_Base {
 	    executeConsistencyPredicateForMetaClassAndSubclasses(metaSubclass);
 	}
     }
+
+    /**
+     * This method does nothing. A <code>FinalConsistencyPredicate</code> cannot
+     * be overridden by other predicates.
+     */
+    @Override
+    public void checkOverridingMethods(DomainMetaClass metaClass) {
+    }
 }

@@ -62,6 +62,14 @@ public class PrivateConsistencyPredicate extends PrivateConsistencyPredicate_Bas
     }
 
     /**
+     * This method does nothing. A <code>PrivateConsistencyPredicate</code>
+     * cannot be overridden by other predicates.
+     */
+    @Override
+    public void checkOverridingMethods(DomainMetaClass metaClass) {
+    }
+
+    /**
      * Executes this consistency predicate for all objects of the given
      * {@link DomainMetaClass}, and all objects of subclasses. Because the
      * predicate is private, it cannot be overridden at any subclass.
