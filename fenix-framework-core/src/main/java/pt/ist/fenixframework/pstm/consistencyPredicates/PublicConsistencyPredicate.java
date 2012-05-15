@@ -192,7 +192,7 @@ public class PublicConsistencyPredicate extends PublicConsistencyPredicate_Base 
 	} else {
 	    try {
 		metaClass.getDomainClass().getDeclaredMethod(getPredicate().getName());
-		// If no exception was thrown, the method is being overridden from this class downward,
+		// If no exception was thrown, the method is being overridden from this class downwards,
 		// so stop and don't search in subclasses.
 		return;
 	    } catch (NoSuchMethodException e) {
@@ -204,6 +204,42 @@ public class PublicConsistencyPredicate extends PublicConsistencyPredicate_Base 
 	// Continue searching in subclasses for overriding predicates
 	for (DomainMetaClass metaSubclass : metaClass.getDomainMetaSubclasses()) {
 	    executeConsistencyPredicateForMetaClassAndSubclasses(metaSubclass);
+	}
+    }
+
+    /**
+     * Checks all the subclasses of this consistency predicate for any methods
+     * that override it. For each method found, checks that it has the
+     * {@link ConsistencyPredicate} annotation.
+     * 
+     * @throws Error
+     *             if this predicate is being overridden by a non-predicate
+     *             method
+     */
+    public void checkOverridingMethods(DomainMetaClass metaClass) {
+	if (metaClass == getDomainMetaClass()) {
+	    // The metaClass is this very predicate's declaring class, so it is not a subclass yet.
+	} else {
+	    try {
+		Method overridingMethod = metaClass.getDomainClass().getDeclaredMethod(getPredicate().getName());
+		// Check that the overriding method is a consistency predicate
+		if (!overridingMethod.isAnnotationPresent(ConsistencyPredicate.class) && !overridingMethod
+			.isAnnotationPresent(jvstm.cps.ConsistencyPredicate.class)) {
+		    throw new Error("The method " + overridingMethod.getDeclaringClass().getName() + "."
+			    + overridingMethod.getName()
+			    + "() overrides a consistency predicate, so it must also have the @ConsistencyPredicate annotation.");
+		}
+		// If no exception was thrown, the method is being overridden from this class downwards,
+		// so stop and don't search in subclasses.
+		return;
+	    } catch (NoSuchMethodException e) {
+		// The method is not being overridden here
+	    }
+	}
+
+	// Continue searching in subclasses for overriding predicates
+	for (DomainMetaClass metaSubclass : metaClass.getDomainMetaSubclasses()) {
+	    checkOverridingMethods(metaSubclass);
 	}
     }
 

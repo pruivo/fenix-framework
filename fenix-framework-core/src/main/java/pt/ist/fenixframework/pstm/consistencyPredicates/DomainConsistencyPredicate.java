@@ -107,6 +107,17 @@ public abstract class DomainConsistencyPredicate extends DomainConsistencyPredic
     public abstract void executeConsistencyPredicateForMetaClassAndSubclasses(DomainMetaClass metaClass);
 
     /**
+     * Checks all the subclasses of this consistency predicate for any methods
+     * that override it. For each method found, checks that it has the
+     * {@link ConsistencyPredicate} annotation.
+     * 
+     * @throws Error
+     *             if this predicate is being overridden by a non-predicate
+     *             method
+     */
+    public abstract void checkOverridingMethods(DomainMetaClass metaClass);
+
+    /**
      * Executes this consistency predicate for all objects in the given
      * <code>List</code>. For each object, after the execution, this method
      * creates a {@link DomainDependenceRecord} based on the dependencies of

@@ -123,6 +123,7 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 	if (FenixFramework.canCreateDomainMetaObjects()) {
 	    initializeDomainMetaClasses(domainModel);
 	    initializeDomainConsistencyPredicates();
+	    checkAllMethodsOverridingPredicates();
 	} else {
 	    deleteAllMetaObjectsAndClasses();
 	}
@@ -556,6 +557,23 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 	    DomainMetaClass metaClass) {
 	for (DomainConsistencyPredicate knownConsistencyPredicate : existingPredicatesToUpdate) {
 	    knownConsistencyPredicate.updateConsistencyPredicateOverridden();
+	}
+    }
+
+    /**
+     * Checks that none of the current consistency predicates are being
+     * overridden by regular methods. A method that overrides a consistency
+     * predicate must also have the {@link ConsistencyPredicate} annotation.
+     * 
+     * @throws Error
+     *             if any predicate is being overridden by a non-predicate
+     *             method
+     */
+    private void checkAllMethodsOverridingPredicates() {
+	for (DomainMetaClass metaClass : getDomainMetaClasses()) {
+	    for (DomainConsistencyPredicate predicate : metaClass.getDeclaredConsistencyPredicates()) {
+		predicate.checkOverridingMethods(metaClass);
+	    }
 	}
     }
 
