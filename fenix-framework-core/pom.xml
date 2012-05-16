@@ -32,6 +32,16 @@
           </execution>
         </executions>
       </plugin>
+    	<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-compiler-plugin</artifactId>
+			<version>2.4</version>
+			<configuration>
+				<target>1.6</target>
+				<source>1.6</source>
+				<proc>none</proc>
+			</configuration>
+		</plugin>
     </plugins>
   </build>
   
@@ -91,6 +101,27 @@
       <url>https://fenix-ashes.ist.utl.pt/nexus/content/repositories/fenix-ashes-maven-repository</url>
     </pluginRepository>
   </pluginRepositories>
+
+	<profiles>
+		<profile>
+	  	<id>default-tools.jar</id>
+	    <activation>
+				<property>
+		  		<name>java.vendor</name>
+		  		<value>Sun Microsystems Inc.</value>
+				</property>
+	      </activation>
+	      <dependencies>
+		    <dependency>
+		      <groupId>com.sun</groupId>
+		      <artifactId>tools</artifactId>
+		      <version>1.4.2</version>
+		      <scope>system</scope>
+		      <systemPath>${java.home}/../lib/tools.jar</systemPath>
+		    </dependency>
+	    </dependencies>
+	  </profile>
+	</profiles>
 
   <distributionManagement>
     <repository>
