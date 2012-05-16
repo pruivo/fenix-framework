@@ -414,14 +414,14 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 		continue;
 	    }
 	    if (predicateMethod.getParameterTypes().length != 0) {
-		throw new Error("Consistency Predicates cannot have parameters! " + predicateMethod);
+		throw new Error("Consistency Predicates cannot have parameters - " + predicateMethod);
 	    }
 	    if (!predicateMethod.getReturnType().toString().equals("boolean")) {
-		throw new Error("Consistency Predicates must return a boolean value! " + predicateMethod);
+		throw new Error("Consistency Predicates must return a primitive boolean value - " + predicateMethod);
 	    }
 	    if (!Modifier.isPrivate(predicateMethod.getModifiers()) && !Modifier.isProtected(predicateMethod.getModifiers())
 		    && !Modifier.isPublic(predicateMethod.getModifiers())) {
-		throw new Error("Consistency Predicates must be private, protected or public! " + predicateMethod);
+		throw new Error("Consistency Predicates must be private, protected or public - " + predicateMethod);
 	    }
 	    if (Modifier.isAbstract(predicateMethod.getModifiers())) {
 		continue;
