@@ -31,6 +31,7 @@ class DomainMetaClass {
 
 class consistencyPredicates.DomainConsistencyPredicate {
 	PredicateMethod predicate;
+	String ojbConcreteClass;
 }
 
 	class consistencyPredicates.PublicConsistencyPredicate extends consistencyPredicates.DomainConsistencyPredicate {

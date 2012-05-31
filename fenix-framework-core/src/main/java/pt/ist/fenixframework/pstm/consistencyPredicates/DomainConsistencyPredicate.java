@@ -31,6 +31,7 @@ public abstract class DomainConsistencyPredicate extends DomainConsistencyPredic
     public DomainConsistencyPredicate() {
 	super();
 	checkFrameworkNotInitialized();
+	setOjbConcreteClass(getClass().getName());
     }
 
     /**
