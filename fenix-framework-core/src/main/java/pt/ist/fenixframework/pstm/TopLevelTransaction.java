@@ -46,7 +46,7 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
     private static final Object COMMIT_LISTENERS_LOCK = new Object();
     private static volatile Cons<CommitListener> COMMIT_LISTENERS = Cons.empty();
 
-    protected HashSet<RelationList<? extends DomainObject, ? extends DomainObject>> relationListChanges = new HashSet<RelationList<? extends DomainObject, ? extends DomainObject>>();
+    final protected HashMap<String, RelationList<? extends DomainObject, ? extends DomainObject>> relationListChanges = new HashMap<String, RelationList<? extends DomainObject, ? extends DomainObject>>();
 
     public static void addCommitListener(CommitListener listener) {
 	synchronized (COMMIT_LISTENERS_LOCK) {
@@ -560,7 +560,7 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
     }
 
     protected void updateWriteSetWithRelationChanges() {
-	for (RelationList relationChanged : relationListChanges) {
+	for (RelationList relationChanged : relationListChanges.values()) {
 	    relationChanged.consolidateElementsIfLoaded();
 	}
     }
@@ -731,7 +731,7 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
 
     @Override
     public void registerRelationListChanges(RelationList<? extends DomainObject, ? extends DomainObject> relationList) {
-	relationListChanges.add(relationList);
+	relationListChanges.put(relationList.getUniqueId(), relationList);
     }
 
     // ---------------------------------------------------------------
