@@ -217,8 +217,16 @@ public class DomainMetaClass extends DomainMetaClass_Base {
      */
     protected void initExistingDomainObjects() {
 	checkFrameworkNotInitialized();
+	AbstractDomainObject existingDO = null;
 	for (String oid : getExistingOIDs()) {
-	    AbstractDomainObject existingDO = (AbstractDomainObject) AbstractDomainObject.fromOID(Long.valueOf(oid));
+	    try {
+		existingDO = (AbstractDomainObject) AbstractDomainObject.fromOID(Long.valueOf(oid));
+	    } catch (Exception ex) {
+		System.out.println("WARNING - An exception was thrown while allocating the object: " + getDomainClass() + " - "
+			+ oid);
+		ex.printStackTrace();
+		continue;
+	    }
 	    DomainMetaObject metaObject = new DomainMetaObject();
 	    metaObject.setDomainObject(existingDO);
 	    addExistingDomainMetaObjects(metaObject);
