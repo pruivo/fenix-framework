@@ -217,7 +217,7 @@ public class DomainMetaClass extends DomainMetaClass_Base {
      */
     protected void initExistingDomainObjects() {
 	checkFrameworkNotInitialized();
-	for (String oid : getExistingOIDsForClass(getDomainClass())) {
+	for (String oid : getExistingOIDs()) {
 	    AbstractDomainObject existingDO = (AbstractDomainObject) AbstractDomainObject.fromOID(Long.valueOf(oid));
 	    DomainMetaObject metaObject = new DomainMetaObject();
 	    metaObject.setDomainObject(existingDO);
@@ -232,7 +232,7 @@ public class DomainMetaClass extends DomainMetaClass_Base {
      * @return the <code>List</code> of <code>Strings</code> containing the OIDs
      *         of all the {@link AbstractDomainObject}s of this class.
      */
-    private List<String> getExistingOIDsForClass(Class<? extends AbstractDomainObject> domainClass) {
+    private List<String> getExistingOIDs() {
 	DomainMetaClass topSuperClass = this;
 	while (topSuperClass.hasDomainMetaSuperclass()) {
 	    topSuperClass = topSuperClass.getDomainMetaSuperclass();
