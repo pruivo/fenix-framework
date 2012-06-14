@@ -209,16 +209,16 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 
     /**
      * This method should be called only during the initialization of the
-     * {@link FenixFramework}, for each new {@link DomainMetaClass}.
+     * {@link FenixFramework}, for each new <code>DomainMetaClass</code>.
      * 
-     * Creates a {@link DomainMetaObject} for each existing
-     * {@link AbstractDomainObject} of this class, by using a query to the
-     * persistent backend.
+     * Adds the {@link DomainMetaObject} of each existing
+     * {@link AbstractDomainObject} of this class to the list of existing meta
+     * objects of this <code>DomainMetaClass</code>.
      */
     protected void initExistingDomainObjects() {
 	checkFrameworkNotInitialized();
 	AbstractDomainObject existingDO = null;
-	for (String oid : getExistingOIDs()) {
+	for (String oid : getExistingOIDsWithMetaObject(getDomainClass())) {
 	    try {
 		existingDO = (AbstractDomainObject) AbstractDomainObject.fromOID(Long.valueOf(oid));
 	    } catch (Exception ex) {
@@ -227,29 +227,61 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 		ex.printStackTrace();
 		continue;
 	    }
-	    DomainMetaObject metaObject = new DomainMetaObject();
-	    metaObject.setDomainObject(existingDO);
-	    addExistingDomainMetaObjects(metaObject);
+	    addExistingDomainMetaObjects(existingDO.getMetaObject());
 	}
     }
 
     /**
-     * Uses a JDBC query to obtain all the OIDs of the existing
-     * {@link AbstractDomainObject}s of this class.
+     * This method should be called only during the initialization of the
+     * {@link FenixFramework}, for each new <code>DomainMetaClass</code>.
+     * 
+     * Creates a {@link DomainMetaObject} for each existing
+     * {@link AbstractDomainObject} of the specified class. The new
+     * {@link DomainMetaObject} is not yet associated with any
+     * <code>DomainMetaClass</code>.
+     */
+    protected static void createMetaObjectsFor(Class<? extends AbstractDomainObject> domainClass) {
+	if (FenixFramework.isInitialized()) {
+	    throw new RuntimeException(
+		    "Instances of DomainMetaClass cannot be edited after the FenixFramework has been initialized.");
+	}
+
+	System.out.println("[MetaClasses] Creating all DomainMetaObjects for the class: " + domainClass);
+	AbstractDomainObject existingDO = null;
+	for (String oid : getExistingOIDsWithoutMetaObject(domainClass)) {
+	    try {
+		existingDO = (AbstractDomainObject) AbstractDomainObject.fromOID(Long.valueOf(oid));
+	    } catch (Exception ex) {
+		System.out.println("WARNING - An exception was thrown while allocating the object: " + domainClass + " - " + oid);
+		ex.printStackTrace();
+		continue;
+	    }
+	    DomainMetaObject metaObject = new DomainMetaObject();
+	    metaObject.setDomainObject(existingDO);
+	}
+    }
+
+    /**
+     * Uses a JDBC query to obtain the OIDs of the existing
+     * {@link AbstractDomainObject}s of this class that already have a
+     * {@link DomainMetaObject}.
+     * 
+     * @param domainClass
+     *            the <code>Class</code> for which to obtain the existing object
+     *            OIDs
      * 
      * @return the <code>List</code> of <code>Strings</code> containing the OIDs
-     *         of all the {@link AbstractDomainObject}s of this class.
+     *         of all the {@link AbstractDomainObject}s of the given class, with
+     *         {@link DomainMetaObject}.
      */
-    private List<String> getExistingOIDs() {
-	DomainMetaClass topSuperClass = this;
-	while (topSuperClass.hasDomainMetaSuperclass()) {
-	    topSuperClass = topSuperClass.getDomainMetaSuperclass();
-	}
-	String tableName = DbUtil.convertToDBStyle(topSuperClass.getDomainClass().getSimpleName());
-	String className = getDomainClass().getName();
+    private static List<String> getExistingOIDsWithMetaObject(Class<? extends AbstractDomainObject> domainClass) {
+	String tableName = getTableName(domainClass);
+	String className = domainClass.getName();
 
-	String query = "select OID from " + tableName + ", FF$DOMAIN_CLASS_INFO where OID >> 32 = DOMAIN_CLASS_ID and DOMAIN_CLASS_NAME = '" + className + "'";
-	
+	String query = "select OID from " + tableName
+		+ ", FF$DOMAIN_CLASS_INFO where OID >> 32 = DOMAIN_CLASS_ID and DOMAIN_CLASS_NAME = '" + className
+		+ "' and OID_META_OBJECT is not null";
+
 	ArrayList<String> oids = new ArrayList<String>();
 	try {
 	    Statement statement = Transaction.getCurrentJdbcConnection().createStatement();
@@ -262,6 +294,50 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 	}
 
 	return oids;
+    }
+
+    /**
+     * Uses a JDBC query to obtain the OIDs of the existing
+     * {@link AbstractDomainObject}s of this class that do not yet have a
+     * {@link DomainMetaObject}.
+     * 
+     * @param domainClass
+     *            the <code>Class</code> for which to obtain the existing
+     *            objects OIDs
+     * 
+     * @return the <code>List</code> of <code>Strings</code> containing the OIDs
+     *         of all the {@link AbstractDomainObject}s of the given class,
+     *         without {@link DomainMetaObject}.
+     */
+    private static List<String> getExistingOIDsWithoutMetaObject(Class<? extends AbstractDomainObject> domainClass) {
+	String tableName = getTableName(domainClass);
+	String className = domainClass.getName();
+
+	String query = "select OID from " + tableName
+		+ ", FF$DOMAIN_CLASS_INFO where OID >> 32 = DOMAIN_CLASS_ID and DOMAIN_CLASS_NAME = '" + className
+		+ "' and OID_META_OBJECT is null";
+
+	ArrayList<String> oids = new ArrayList<String>();
+	try {
+	    Statement statement = Transaction.getCurrentJdbcConnection().createStatement();
+	    ResultSet resultSet = statement.executeQuery(query);
+	    while (resultSet.next()) {
+		oids.add(resultSet.getString("OID"));
+	    }
+	} catch (SQLException e) {
+	    throw new Error(e);
+	}
+
+	return oids;
+    }
+
+    private static String getTableName(Class<? extends AbstractDomainObject> domainClass) {
+	Class<?> topSuperClass = domainClass;
+	while (!topSuperClass.getSuperclass().getSuperclass().equals(OneBoxDomainObject.class)) {
+	    //skip to the next non-base superclass
+	    topSuperClass = topSuperClass.getSuperclass().getSuperclass();
+	}
+	return DbUtil.convertToDBStyle(topSuperClass.getSimpleName());
     }
 
     @Override
