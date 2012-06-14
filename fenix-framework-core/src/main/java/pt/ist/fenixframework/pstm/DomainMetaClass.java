@@ -39,6 +39,8 @@ import dml.runtime.RelationAdapter;
 @NoDomainMetaObjects
 public class DomainMetaClass extends DomainMetaClass_Base {
 
+    private static final int MAX_NUM_OF_META_OBJECTS_TO_CREATE = 200000;
+
     //This Listener keeps the metaObjectCount updated, according to the number of elements in the relation: existingDomainMetaObjects 
     static {
 	DomainMetaClassDomainMetaObjects.addListener(new RelationAdapter<DomainMetaClass, DomainMetaObject>() {
@@ -248,7 +250,18 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 
 	System.out.println("[MetaClasses] Creating all DomainMetaObjects for the class: " + domainClass);
 	AbstractDomainObject existingDO = null;
+	
+	int count = 0;
 	for (String oid : getExistingOIDsWithoutMetaObject(domainClass)) {
+	    count++;
+	    if ((count % MAX_NUM_OF_META_OBJECTS_TO_CREATE) == 0) {
+		// Commits the current, and starts a new write transaction.
+		// This is necessary to split the load of the mass creation of DomainMetaObjects among several transactions.
+		// Each transaction processes a maximum of 200k objects in order to avoid OutOfMemory exceptions.
+		// Because the JDBC query only returns objects that have no DomainMetaObjects, there is no problem with
+		// processing only an incomplete part of the objects of this class.
+		Transaction.beginTransaction();
+	    }
 	    try {
 		existingDO = (AbstractDomainObject) AbstractDomainObject.fromOID(Long.valueOf(oid));
 	    } catch (Exception ex) {
