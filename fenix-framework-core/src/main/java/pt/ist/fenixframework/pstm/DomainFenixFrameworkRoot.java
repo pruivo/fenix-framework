@@ -186,9 +186,14 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 		Class<? extends AbstractDomainObject> domainClass = (Class<? extends AbstractDomainObject>) Class
 			.forName(dmlDomainClass.getFullName());
 
-		if (!domainClass.isAnnotationPresent(NoDomainMetaObjects.class)) {
-		    existingDomainClasses.put(domainClass, dmlDomainClass);
+		if (!domainClass.getSuperclass().getName().equals(domainClass.getName() + "_Base")) {
+		    throw new Error("The domain class: " + domainClass + " must extend its corresponding _Base class.");
 		}
+		if (domainClass.isAnnotationPresent(NoDomainMetaObjects.class)) {
+		    continue;
+		}
+
+		existingDomainClasses.put(domainClass, dmlDomainClass);
 	    }
 	    return existingDomainClasses;
 	} catch (ClassNotFoundException e) {
