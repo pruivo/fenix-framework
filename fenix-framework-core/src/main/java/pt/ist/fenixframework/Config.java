@@ -202,7 +202,13 @@ public class Config {
      * 
      * If this parameter is set to true, then,
      * {@link Config#errorfIfDeletingObjectNotDisconnected} must also be set to
-     * true.
+     * true.<br>
+     * <br>
+     * <strong>Note: Setting this parameter to true causes the fenix-framework
+     * to create a {@link DomainMetaObject} for each existing domain object
+     * during the initialization. Depending on the amount of already existing
+     * objects, this may cause the next application startup to be very
+     * slow.</strong>
      * 
      * @see DomainMetaObject#delete()
      */

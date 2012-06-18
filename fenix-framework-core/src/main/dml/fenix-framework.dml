@@ -27,6 +27,7 @@ class DomainFenixFrameworkRoot {
 class DomainMetaClass {
 	DomainClass domainClass;
 	Integer metaObjectCount;
+	Boolean finalized;
 }
 
 class consistencyPredicates.DomainConsistencyPredicate {

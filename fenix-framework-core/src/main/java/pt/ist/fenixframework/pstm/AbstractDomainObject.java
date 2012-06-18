@@ -16,7 +16,7 @@ public abstract class AbstractDomainObject implements DomainObject, dml.runtime.
     // this should be final, but the ensureIdInternal method prevents it
     private long oid;
 
-    private VBox<DomainMetaObject> metaObject;
+    private VBox<DomainMetaObject> domainMetaObject;
 
     public class UnableToDetermineIdException extends RuntimeException {
 	public UnableToDetermineIdException(Throwable cause) {
@@ -39,7 +39,7 @@ public abstract class AbstractDomainObject implements DomainObject, dml.runtime.
 	    DomainMetaObject metaObject = new DomainMetaObject();
 	    metaObject.setDomainObject(this);
 
-	    getPersistentMetaClass().addExistingDomainMetaObjects(getMetaObject());
+	    getDomainMetaClass().addExistingDomainMetaObjects(getDomainMetaObject());
 	}
     }
 
@@ -52,7 +52,7 @@ public abstract class AbstractDomainObject implements DomainObject, dml.runtime.
     }
 
     private void initMetaObject(boolean allocateOnly) {
-	metaObject = VBox.makeNew(this, "metaObject", allocateOnly, false);
+	domainMetaObject = VBox.makeNew(this, "domainMetaObject", allocateOnly, false);
     }
 
     @Override
@@ -176,33 +176,33 @@ public abstract class AbstractDomainObject implements DomainObject, dml.runtime.
 	return null;
     }
 
-    public DomainMetaObject getMetaObject() {
-	return metaObject.get(this, "metaObject");
+    public DomainMetaObject getDomainMetaObject() {
+	return domainMetaObject.get(this, "domainMetaObject");
     }
 
-    public void justSetMetaObject(DomainMetaObject persistentMetaObject) {
-	metaObject.put(this, "metaObject", persistentMetaObject);
+    public void justSetMetaObject(DomainMetaObject domainMetaObject) {
+	this.domainMetaObject.put(this, "domainMetaObject", domainMetaObject);
     }
 
-    private void setMetaObject(DomainMetaObject persistentMetaObject) {
-	persistentMetaObject.setDomainObject(this);
+    private void setMetaObject(DomainMetaObject domainMetaObject) {
+	domainMetaObject.setDomainObject(this);
     }
 
     private void removeMetaObject() {
-	getMetaObject().removeDomainObject();
+	getDomainMetaObject().removeDomainObject();
     }
 
     /**
      * This should be invoked only when this DO is being deleted.
      */
-    private void deleteMetaObject() {
-	if (getMetaObject() != null) {
-	    getMetaObject().delete();
+    private void deleteDomainMetaObject() {
+	if (getDomainMetaObject() != null) {
+	    getDomainMetaObject().delete();
 	}
     }
 
-    private Long get$oidMetaObject() {
-	pt.ist.fenixframework.pstm.AbstractDomainObject value = getMetaObject();
+    private Long get$oidDomainMetaObject() {
+	pt.ist.fenixframework.pstm.AbstractDomainObject value = getDomainMetaObject();
 	return (value == null) ? null : value.getOid();
     }
 
@@ -213,9 +213,8 @@ public abstract class AbstractDomainObject implements DomainObject, dml.runtime.
     }
 
     protected void readMetaObjectFromResultSet(java.sql.ResultSet rs, int txNumber) throws SQLException {
-	DomainMetaObject metaObject = pt.ist.fenixframework.pstm.ResultSetReader
-		.readDomainObject(rs, "OID_META_OBJECT");
-	this.metaObject.persistentLoad(metaObject, txNumber);
+	DomainMetaObject metaObject = pt.ist.fenixframework.pstm.ResultSetReader.readDomainObject(rs, "OID_DOMAIN_META_OBJECT");
+	this.domainMetaObject.persistentLoad(metaObject, txNumber);
     }
 
     protected abstract void readSlotsFromResultSet(java.sql.ResultSet rs, int txNumber) throws java.sql.SQLException;
@@ -238,11 +237,11 @@ public abstract class AbstractDomainObject implements DomainObject, dml.runtime.
 
     protected void deleteDomainObject() {
 	checkDisconnected();
-	deleteMetaObject();
+	deleteDomainMetaObject();
 	Transaction.deleteObject(this);
     }
 
-    private DomainMetaClass getPersistentMetaClass() {
+    private DomainMetaClass getDomainMetaClass() {
 	return DomainFenixFrameworkRoot.getInstance().getDomainMetaClass(this.getClass());
     }
 

@@ -27,7 +27,7 @@ public class DomainDependenceRecord extends DomainDependenceRecord_Base implemen
     public DomainDependenceRecord(Object dependent, DomainConsistencyPredicate predicate, Set<Depended> depended,
 	    boolean consistent) {
 	super();
-	setDependentDomainMetaObject(((AbstractDomainObject) dependent).getMetaObject());
+	setDependentDomainMetaObject(((AbstractDomainObject) dependent).getDomainMetaObject());
 	setDomainConsistencyPredicate(predicate);
 	for (Depended<DomainDependenceRecord> dependedMetaObject : depended) {
 	    addDependedDomainMetaObjects((DomainMetaObject) dependedMetaObject);
@@ -37,7 +37,7 @@ public class DomainDependenceRecord extends DomainDependenceRecord_Base implemen
 
     public DomainDependenceRecord(Object dependent, Method predicate, Set<Depended> depended, boolean consistent) {
 	super();
-	setDependentDomainMetaObject(((AbstractDomainObject) dependent).getMetaObject());
+	setDependentDomainMetaObject(((AbstractDomainObject) dependent).getDomainMetaObject());
 	setPredicate(predicate);
 	for (Depended<DomainDependenceRecord> dependedMetaObject : depended) {
 	    addDependedDomainMetaObjects((DomainMetaObject) dependedMetaObject);

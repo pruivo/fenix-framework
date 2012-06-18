@@ -59,7 +59,7 @@ public class FenixConsistencyCheckTransaction extends ReadTransaction
 
     protected Depended getDependedForBox(VBox box) {
 	AbstractDomainObject domainObject = (AbstractDomainObject) box.getOwnerObject();
-	DomainMetaObject persistentMetaObject = domainObject.getMetaObject();
+	DomainMetaObject persistentMetaObject = domainObject.getDomainMetaObject();
 	return persistentMetaObject;
     }
 
@@ -87,7 +87,7 @@ public class FenixConsistencyCheckTransaction extends ReadTransaction
     public <T> T getBoxValue(VBox<T> vbox, Object obj, String attr) {
 	if ((!FenixFramework.canCreateDomainMetaObjects()) && (obj != checkedObj)) {
 	    throw new Error(
-		    "Consistency predicates are not allowed to access other objects, unless the FenixFramework is configured to create DomainMetaObjects.");
+		    "Consistency predicates are not allowed to access other objects, unless the FenixFramework is configured to create DomainMetaObjects. See: Config.canCreateDomainMetaObjects");
 	}
 
 	boxesRead.add(vbox);

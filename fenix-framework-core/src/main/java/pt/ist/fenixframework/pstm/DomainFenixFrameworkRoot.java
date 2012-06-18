@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import pt.ist.fenixframework.Config;
 import pt.ist.fenixframework.FenixFramework;
 import pt.ist.fenixframework.pstm.consistencyPredicates.ConsistencyPredicate;
 import pt.ist.fenixframework.pstm.consistencyPredicates.DomainConsistencyPredicate;
@@ -236,7 +237,33 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
      *            processed
      */
     private void processExistingMetaClasses(Collection<DomainMetaClass> existingMetaClassesToProcess) {
-	updateExistingMetaClasses(existingMetaClassesToProcess);
+	finishInitializingMetaClasses(existingMetaClassesToProcess);
+	updateExistingMetaClassHierarchy(existingMetaClassesToProcess);
+    }
+
+    /**
+     * Finishes the initialization of any {@link DomainMetaClass}es that was not
+     * yet finalized.<br>
+     * 
+     * @param existingMetaClassesToFinalize
+     *            the <code>Collection</code> of {@link DomainMetaClass}es to be
+     *            finalized
+     */
+    private void finishInitializingMetaClasses(Collection<DomainMetaClass> existingMetaClassesToFinalize) {
+	for (DomainMetaClass metaClass : existingMetaClassesToFinalize) {
+	    if (metaClass.isFinalized()) {
+		continue;
+	    }
+
+	    metaClass.initExistingDomainObjects();
+
+	    // Because the initExistingDomainObjects method is split among several transactions,
+	    // the creation of the DomainMetaClass and its full initialization may not run atomically.
+	    // In case of a system failure during the execution of the initExistingDomainObjects() method,
+	    // the DomainMetaClass was already created, but not yet fully initialized.
+	    // The init is only considered completed when finalized is set to true.
+	    metaClass.setFinalized(true);
+	}
     }
 
     /**
@@ -248,7 +275,7 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
      *            the <code>Collection</code> of {@link DomainMetaClass}es to be
      *            updated
      */
-    private void updateExistingMetaClasses(Collection<DomainMetaClass> existingMetaClassesToUpdate) {
+    private void updateExistingMetaClassHierarchy(Collection<DomainMetaClass> existingMetaClassesToUpdate) {
 	for (DomainMetaClass metaClass : existingMetaClassesToUpdate) {
 	    if (!metaClass.hasDomainMetaSuperclass()) {
 		if (hasSuperclassInDML(metaClass)) {
@@ -347,13 +374,20 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 	for (Class<? extends AbstractDomainObject> domainClass : newClassesToAddTopDown) {
 	    // Commits the current, and starts a new write transaction.
 	    // This is necessary to split the load of the mass creation of DomainMetaObjects among several transactions.
-	    // Each transaction fully processes one DomainMetaClass.
+	    // Each transaction processes one DomainMetaClass.
 	    Transaction.beginTransaction();
 	    DomainMetaClass newDomainMetaClass = new DomainMetaClass(domainClass);
 	    if (hasSuperclassInDML(newDomainMetaClass)) {
 		newDomainMetaClass.initDomainMetaSuperclass(getDomainMetaSuperclassFromDML(newDomainMetaClass));
 	    }
 	    newDomainMetaClass.initExistingDomainObjects();
+
+	    // Because the initExistingDomainObjects method is split among several transactions,
+	    // the creation of the DomainMetaClass and its full initialization may not run atomically.
+	    // In case of a system failure during the execution of the initExistingDomainObjects() method,
+	    // the DomainMetaClass was already created, but not yet fully initialized.
+	    // The init is only considered completed when finalized is set to true.
+	    newDomainMetaClass.setFinalized(true);
 	}
     }
 
@@ -606,8 +640,11 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 
     /**
      * Deletes all the {@link DomainMetaClass}es and {@link DomainMetaObject}s,
-     * and any associated {@link DomainConsistencyPredicate}s and {@link DomainDependenceRecord}s.
-     * This method should be invoked when the {@link FenixFramework} is configured not to create meta objects.
+     * and any associated {@link DomainConsistencyPredicate}s and
+     * {@link DomainDependenceRecord}s. This method should be invoked when the
+     * {@link FenixFramework} is configured not to create meta objects.
+     * 
+     * @see Config#canCreateMetaObjects
      */
     private void deleteAllMetaObjectsAndClasses() {
 	for (DomainMetaClass metaClass : getDomainMetaClasses()) {

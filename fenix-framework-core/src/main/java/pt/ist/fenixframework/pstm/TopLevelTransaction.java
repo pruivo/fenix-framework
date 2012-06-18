@@ -524,7 +524,7 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
 	    return;
 	}
 	AbstractDomainObject ado = (AbstractDomainObject) newObject;
-	DomainMetaClass metaClass = ado.getMetaObject().getDomainMetaClass();
+	DomainMetaClass metaClass = ado.getDomainMetaObject().getDomainMetaClass();
 	for (DomainConsistencyPredicate knownPredicate : metaClass.getAllConsistencyPredicates()) {
 	    Method predicate = knownPredicate.getPredicate();
 	    Pair pair = checkPredicateForOneObject(newObject, predicate, true);
@@ -550,7 +550,7 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
 
 	Cons<Iterator<DependenceRecord>> iteratorsList = Cons.empty();
 	for (jvstm.VBox box : boxesWritten.keySet()) {
-	    Depended dep = ((AbstractDomainObject) ((VBox) box).getOwnerObject()).getMetaObject();
+	    Depended dep = ((AbstractDomainObject) ((VBox) box).getOwnerObject()).getDomainMetaObject();
 	    if (dep != null) {
 		iteratorsList = iteratorsList.cons(dep.getDependenceRecords().iterator());
 	    }
