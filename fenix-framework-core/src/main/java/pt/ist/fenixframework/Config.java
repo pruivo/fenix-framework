@@ -208,7 +208,22 @@ public class Config {
      * to create a {@link DomainMetaObject} for each existing domain object
      * during the initialization. Depending on the amount of already existing
      * objects, this may cause the next application startup to be very
-     * slow.</strong>
+     * slow.</strong><br>
+     * <br>
+     * If set to true, the fenix-framework no longer supports:
+     * <ul>
+     * <li>overriding a consistency predicate with a non-predicate method</li>
+     * <li>removing from DML a domain class with already existing objects</li>
+     * <li>changing in DML the superclass of a domain class with already
+     * existing objects</li>
+     * </ul>
+     * 
+     * Any existing objects must be removed during runtime, before attempting
+     * these changes.<br>
+     * <br>
+     * <strong>If a programmer changes the implementation of an existing
+     * consistency predicate, he/she should always change the method's signature
+     * to force the fenix-framework to re-execute the predicate.</strong>
      * 
      * @see DomainMetaObject#delete()
      */
