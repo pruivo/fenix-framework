@@ -337,33 +337,13 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
      *            processed, in top-down order of the class hiearchy
      */
     private void processNewClasses(Collection<Class<? extends AbstractDomainObject>> newClassesToProcessTopDown) {
-	createMetaObjectsForNewClasses(newClassesToProcessTopDown);
 	createNewMetaClasses(newClassesToProcessTopDown);
     }
 
     /**
-     * Creates a {@link DomainMetaObject} for each existing object of each new
-     * class. The new {@link DomainMetaObject}s are not yet associated to any
-     * {@link DomainMetaClass}.
-     * 
-     * @param newClassesToAddTopDown
-     *            the <code>Collection</code> of <code>Classes</code> for which
-     *            to create {@link DomainMetaObject}s, in top-down order
-     */
-    private void createMetaObjectsForNewClasses(Collection<Class<? extends AbstractDomainObject>> newClassesToAddTopDown) {
-	for (Class<? extends AbstractDomainObject> domainClass : newClassesToAddTopDown) {
-	    // Commits the current, and starts a new write transaction.
-	    // This is necessary to split the load of the mass creation of DomainMetaObjects among several transactions.
-	    // Each transaction processes all the objects of one DomainMetaClass.
-	    Transaction.beginTransaction();
-	    DomainMetaClass.createMetaObjectsFor(domainClass);
-	}
-    }
-
-    /**
      * Creates a {@link DomainMetaClass} for each new class. For each new
-     * {@link DomainMetaClass}, initializes its meta-superclass, associates all
-     * the {@link DomainMetaObject}s of the existing objects with the new
+     * {@link DomainMetaClass}, initializes its meta-superclass and creates a
+     * {@link DomainMetaObject} for each existing object of the new
      * {@link DomainMetaClass}.
      * 
      * @param newClassesToAddTopDown

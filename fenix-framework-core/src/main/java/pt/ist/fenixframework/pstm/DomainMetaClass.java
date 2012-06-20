@@ -203,10 +203,10 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 	return null;
     }
 
-    public <PredicateType extends DomainConsistencyPredicate> PredicateType getDeclaredConsistencyPredicate(String predicateName) {
+    public <PredicateT extends DomainConsistencyPredicate> PredicateT getDeclaredConsistencyPredicate(String predicateName) {
 	try {
 	    Method predicateMethod = getDomainClass().getDeclaredMethod(predicateName);
-	    return (PredicateType) getDeclaredConsistencyPredicate(predicateMethod);
+	    return (PredicateT) getDeclaredConsistencyPredicate(predicateMethod);
 	} catch (NoSuchMethodException e) {
 	    return null;
 	}
@@ -228,14 +228,14 @@ public class DomainMetaClass extends DomainMetaClass_Base {
      * This method should be called only during the initialization of the
      * {@link FenixFramework}, for each new <code>DomainMetaClass</code>.
      * 
-     * Adds the {@link DomainMetaObject} of each existing
-     * {@link AbstractDomainObject} of this class to the list of existing meta
-     * objects of this <code>DomainMetaClass</code>.
+     * Creates a {@link DomainMetaObject} for each existing
+     * {@link AbstractDomainObject} of the specified class, and associates the
+     * new {@link DomainMetaObject} to its <code>DomainMetaClass</code>.
      */
     protected void initExistingDomainObjects() {
 	checkFrameworkNotInitialized();
 	AbstractDomainObject existingDO = null;
-	List<String> oids = getExistingOIDsWithoutMetaClass(getDomainClass());
+	List<String> oids = getExistingOIDsWithoutMetaObject(getDomainClass());
 	while (!oids.isEmpty()) {
 	    for (String oid : oids) {
 		try {
@@ -246,50 +246,9 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 		    ex.printStackTrace();
 		    continue;
 		}
-		addExistingDomainMetaObjects(existingDO.getDomainMetaObject());
-	    }
-
-	    // Commits the current, and starts a new write transaction.
-	    // This is necessary to split the load of the mass creation of DomainMetaObjects among several transactions.
-	    // Each transaction processes a maximum of 200k objects in order to avoid OutOfMemory exceptions.
-	    // Because the JDBC query only returns objects that are not yet associated with their DomainMetaClass,
-	    // there is no problem with processing only an incomplete part of the objects of this class.
-	    Transaction.beginTransaction();
-	    oids = getExistingOIDsWithoutMetaClass(getDomainClass());
-	}
-    }
-
-    /**
-     * This method should be called only during the initialization of the
-     * {@link FenixFramework}, for each new <code>DomainMetaClass</code>.
-     * 
-     * Creates a {@link DomainMetaObject} for each existing
-     * {@link AbstractDomainObject} of the specified class. The new
-     * {@link DomainMetaObject} is not yet associated with any
-     * <code>DomainMetaClass</code>.
-     */
-    protected static void createMetaObjectsFor(Class<? extends AbstractDomainObject> domainClass) {
-	if (FenixFramework.isInitialized()) {
-	    throw new RuntimeException(
-		    "Instances of DomainMetaClass cannot be edited after the FenixFramework has been initialized.");
-	}
-
-	System.out.println("[MetaClasses] Creating all DomainMetaObjects for the class: " + domainClass);
-	AbstractDomainObject existingDO = null;
-	
-	List<String> oids = getExistingOIDsWithoutMetaObject(domainClass);
-	while (!oids.isEmpty()) {
-	    for (String oid : oids) {
-		try {
-		    existingDO = (AbstractDomainObject) AbstractDomainObject.fromOID(Long.valueOf(oid));
-		} catch (Exception ex) {
-		    System.out.println("WARNING - An exception was thrown while allocating the object: " + domainClass + " - "
-			    + oid);
-		    ex.printStackTrace();
-		    continue;
-		}
 		DomainMetaObject metaObject = new DomainMetaObject();
 		metaObject.setDomainObject(existingDO);
+		addExistingDomainMetaObjects(metaObject);
 	    }
 
 	    // Commits the current, and starts a new write transaction.
@@ -298,48 +257,8 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 	    // Because the JDBC query only returns objects that have no DomainMetaObjects, there is no problem with
 	    // processing only an incomplete part of the objects of this class.
 	    Transaction.beginTransaction();
-	    oids = getExistingOIDsWithoutMetaObject(domainClass);
+	    oids = getExistingOIDsWithoutMetaObject(getDomainClass());
 	}
-    }
-
-    /**
-     * Uses a JDBC query to obtain the OIDs of the existing
-     * {@link AbstractDomainObject}s of this class that already have a
-     * {@link DomainMetaObject} that is not yet associated with any
-     * {@link DomainMetaClass}.<br>
-     * <br>
-     * This method only returns a <strong>maximum of
-     * MAX_NUM_OF_META_OBJECTS_TO_CREATE</strong> OIDs.
-     * 
-     * @param domainClass
-     *            the <code>Class</code> for which to obtain the existing object
-     *            OIDs
-     * 
-     * @return the <code>List</code> of <code>Strings</code> containing the OIDs
-     *         of all the {@link AbstractDomainObject}s of the given class, with
-     *         {@link DomainMetaObject}.
-     */
-    private static List<String> getExistingOIDsWithoutMetaClass(Class<? extends AbstractDomainObject> domainClass) {
-	String tableName = getTableName(domainClass);
-	String className = domainClass.getName();
-
-	String query = "select DO.OID from " + tableName
-		+ " as DO, FF$DOMAIN_CLASS_INFO as DCI, FF$DOMAIN_META_OBJECT as DMO where DO.OID >> 32 = DCI.DOMAIN_CLASS_ID"
-		+ " and DCI.DOMAIN_CLASS_NAME = '" + className + "' and DO.OID_DOMAIN_META_OBJECT = DMO.OID"
-		+ " and DMO.OID_DOMAIN_META_CLASS is null limit " + MAX_NUM_OF_META_OBJECTS_TO_CREATE;
-
-	ArrayList<String> oids = new ArrayList<String>();
-	try {
-	    Statement statement = Transaction.getCurrentJdbcConnection().createStatement();
-	    ResultSet resultSet = statement.executeQuery(query);
-	    while (resultSet.next()) {
-		oids.add(resultSet.getString("OID"));
-	    }
-	} catch (SQLException e) {
-	    throw new Error(e);
-	}
-
-	return oids;
     }
 
     /**
