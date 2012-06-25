@@ -157,15 +157,32 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 	super.removeDomainFenixFrameworkRoot();
     }
 
-    @Override
     public Class<? extends AbstractDomainObject> getDomainClass() {
-	return super.getDomainClass();
+	String[] strings = getDomainClassName().split(" ");
+	String fullyQualifiedClassName = strings[1];
+	strings = fullyQualifiedClassName.split("[.]");
+
+	try {
+	    Class<?> domainClass = Class.forName(fullyQualifiedClassName);
+	    return (Class<? extends AbstractDomainObject>) domainClass;
+	} catch (ClassNotFoundException e) {
+	    System.out.println("The following domain class has been removed:");
+	    System.out.println(e.getMessage());
+	    System.out.println();
+	    System.out.flush();
+	}
+	return null;
+    }
+
+    public void setDomainClass(Class<? extends AbstractDomainObject> domainClass) {
+	checkFrameworkNotInitialized();
+	setDomainClassName(domainClass.toString());
     }
 
     @Override
-    public void setDomainClass(Class domainClass) {
+    public void setDomainClassName(String domainClassName) {
 	checkFrameworkNotInitialized();
-	super.setDomainClass(domainClass);
+	super.setDomainClassName(domainClassName);
     }
 
     /**
@@ -449,7 +466,7 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 	    throw new Error("Cannot delete a domain class that has existing meta objects");
 	}
 
-	// If we are deleting this class, then the previous subclass will have changed extends
+	// If we are deleting this class, then the previous subclass will have changed its superclass
 	// and should also be deleted.
 	for (DomainMetaClass metaSubclass : getDomainMetaSubclasses()) {
 	    metaSubclass.delete();

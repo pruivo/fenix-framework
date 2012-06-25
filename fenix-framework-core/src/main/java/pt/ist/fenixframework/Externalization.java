@@ -80,23 +80,6 @@ public class Externalization {
         }
     }
 
-    public static Class<? extends AbstractDomainObject> internalizeDomainClass(String classToString) {
-	String[] strings = classToString.split(" ");
-	String fullyQualifiedClassName = strings[1];
-	strings = fullyQualifiedClassName.split("[.]");
-
-	try {
-	    Class<?> internalizedClass = Class.forName(fullyQualifiedClassName);
-	    return (Class<? extends AbstractDomainObject>) internalizedClass;
-	} catch (ClassNotFoundException e) {
-	    System.out.println("The following domain class has been removed:");
-	    System.out.println(e.getMessage());
-	    System.out.println();
-	    System.out.flush();
-	}
-	return null;
-    }
-
     public static Method internalizePredicateMethod(String methodToString) {
 	try {
 	    String[] strings = methodToString.split(" ");

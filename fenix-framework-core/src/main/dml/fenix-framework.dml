@@ -1,11 +1,5 @@
 package pt.ist.fenixframework.pstm;
 
-valueType java.lang.Class as DomainClass {
-    externalizeWith {
-        String toString();
-    }
-    internalizeWith pt.ist.fenixframework.Externalization.internalizeDomainClass();
-}
 
 valueType java.lang.reflect.Method as PredicateMethod {
     externalizeWith {
@@ -25,7 +19,7 @@ class DomainFenixFrameworkRoot {
 }
 
 class DomainMetaClass {
-	DomainClass domainClass;
+	String domainClassName;
 	Integer metaObjectCount;
 	Boolean finalized;
 }
