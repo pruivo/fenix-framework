@@ -12,14 +12,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import pt.ist.fenixframework.Config;
 import pt.ist.fenixframework.FenixFramework;
 import pt.ist.fenixframework.pstm.consistencyPredicates.DomainConsistencyPredicate;
+import pt.ist.fenixframework.pstm.consistencyPredicates.DomainDependenceRecord;
 import pt.ist.fenixframework.pstm.consistencyPredicates.PrivateConsistencyPredicate;
 import pt.ist.fenixframework.pstm.consistencyPredicates.PublicConsistencyPredicate;
 import pt.ist.fenixframework.pstm.repository.DbUtil;
-import dml.runtime.Relation;
-import dml.runtime.RelationAdapter;
 
 /**
  * A <code>DomainMetaClass</code> is the domain entity that represents a class
@@ -41,27 +39,6 @@ import dml.runtime.RelationAdapter;
 public class DomainMetaClass extends DomainMetaClass_Base {
 
     private static final int MAX_NUM_OF_META_OBJECTS_TO_CREATE = 200000;
-
-    //This Listener keeps the metaObjectCount updated, according to the number of elements in the relation: existingDomainMetaObjects 
-    static {
-	DomainMetaClassDomainMetaObjects.addListener(new RelationAdapter<DomainMetaClass, DomainMetaObject>() {
-	    @Override
-	    public void beforeRemove(Relation<DomainMetaClass, DomainMetaObject> rel, DomainMetaClass metaClass,
-		    DomainMetaObject metaObject) {
-		if (metaClass != null) {
-		    metaClass.setMetaObjectCount(metaClass.getMetaObjectCount() - 1);
-		}
-	    }
-	    
-	    @Override
-	    public void beforeAdd(Relation<DomainMetaClass, DomainMetaObject> rel, DomainMetaClass metaClass,
-		    DomainMetaObject metaObject) {
-		if (metaClass != null) {
-		    metaClass.setMetaObjectCount(metaClass.getMetaObjectCount() + 1);
-		}
-	    }
-	});
-    }
 
     /**
      * Compares two classes according to their hierarchies, such that a
@@ -120,7 +97,6 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 	checkFrameworkNotInitialized();
 	setDomainClass(domainClass);
 	DomainFenixFrameworkRoot.getInstance().addDomainMetaClasses(this);
-	setMetaObjectCount(0);
 
 	System.out.println("[MetaClasses] Creating new MetaClass: " + domainClass);
     }
@@ -325,6 +301,20 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 	return DbUtil.convertToDBStyle(topSuperClass.getSimpleName());
     }
 
+    private String getTableName() {
+	DomainMetaClass topMetaClass = this;
+	while (topMetaClass.hasDomainMetaSuperclass()) {
+	    //skip to the next non-base superclass
+	    topMetaClass = topMetaClass.getDomainMetaSuperclass();
+	}
+	return DbUtil.convertToDBStyle(getSimpleClassName(topMetaClass.getDomainClassName()));
+    }
+
+    private String getSimpleClassName(String fullClassName) {
+	String[] strings = fullClassName.split("\\.");
+	return strings[strings.length - 1];
+    }
+
     @Override
     public void addDomainMetaSubclasses(DomainMetaClass domainMetaSubclasses) {
 	checkFrameworkNotInitialized();
@@ -452,19 +442,10 @@ public class DomainMetaClass extends DomainMetaClass_Base {
      * A DomainMetaClass should be deleted only when the corresponding domain
      * class is removed from the DML, or the framework is configured not to
      * create meta objects.
-     * 
-     * @throws Error
-     *             if this <code>DomainMetaClass</code> still has existing
-     *             {@link DomainMetaObject}s. The framework does not support
-     *             removing from DML a class that has existing objects. To
-     *             remove a class, you must delete all the existing objects
-     *             first, during runtime.
      **/
     protected void delete() {
 	checkFrameworkNotInitialized();
-	if (getMetaObjectCount() != 0) {
-	    throw new Error("Cannot delete a domain class that has existing meta objects");
-	}
+	removeAllMetaObjects();
 
 	// If we are deleting this class, then the previous subclass will have changed its superclass
 	// and should also be deleted.
@@ -472,8 +453,7 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 	    metaSubclass.delete();
 	}
 
-	System.out.println("[MetaClasses] Deleted metaClass "
-		+ ((getDomainClass() == null) ? "" : getDomainClass().getSimpleName()));
+	System.out.println("[MetaClasses] Deleted metaClass " + getDomainClassName());
 	for (DomainConsistencyPredicate domainConsistencyPredicate : getDeclaredConsistencyPredicates()) {
 	    domainConsistencyPredicate.classDelete();
 	}
@@ -488,43 +468,53 @@ public class DomainMetaClass extends DomainMetaClass_Base {
     }
 
     /**
-     * This method should be called only during the initialization of the
-     * {@link FenixFramework}, when the framework is deleting all the existing
-     * {@link DomainMetaClass}es and {@link DomainMetaObject}s. This happens
-     * when the framework is configured not to create meta objects. <br>
-     * Deletes this <code>DomainMetaClass</code>, and all its metaSubclasses.
-     * Also deletes all the declared {@link DomainConsistencyPredicate}s. <br>
-     * A DomainMetaClass should be deleted only when the corresponding domain
-     * class is removed from the DML, or the framework is configured not to
-     * create meta objects. <br>
-     * In this case, a <code>DomainMetaClass</code> can be deleted even if it
-     * has existing {@link DomainMetaObject}s.
-     * 
-     * @see Config#canCreateMetaObjects
-     **/
-    protected void massDelete() {
-	checkFrameworkNotInitialized();
-	for (DomainMetaClass metaSubclass : getDomainMetaSubclasses()) {
-	    metaSubclass.massDelete();
+     * Uses a JDBC query to obtain the delete all the {@link DomainMetaObject}s
+     * of this class. It also sets to null any OIDs that used to point to the
+     * deleted {@link DomainMetaObject}s, both in the
+     * {@link AbstractDomainObject}'s and in the {@link DomainDependenceRecord}
+     * 's tables.
+     */
+    protected void removeAllMetaObjects() {
+	String tableName = getTableName();
+	
+	String metaObjectsToDeleteQuery = "select OID from FF$DOMAIN_META_OBJECT where OID_DOMAIN_META_CLASS = '"
+		+ getExternalId() + "'";
+	
+	String clearDomainObjectsQuery = "update " + tableName + " set OID_DOMAIN_META_OBJECT = null "
+		+ "where OID_DOMAIN_META_OBJECT in (" + metaObjectsToDeleteQuery + ")";
+
+	try {
+	    Transaction.getCurrentJdbcConnection().createStatement().executeUpdate(clearDomainObjectsQuery);
+	} catch (SQLException e) {
+	    throw new Error(e);
 	}
 
-	System.out.println("[MetaClasses] Deleted metaClass "
-		+ ((getDomainClass() == null) ? "" : getDomainClass().getSimpleName()));
-	for (DomainConsistencyPredicate domainConsistencyPredicate : getDeclaredConsistencyPredicates()) {
-	    domainConsistencyPredicate.classDelete();
+	String clearDependenceRecordsQuery = "delete from FF$DOMAIN_DEPENDENCE_RECORD where OID_DEPENDENT_DOMAIN_META_OBJECT "
+		+ "in (" + metaObjectsToDeleteQuery + ")";
+
+	try {
+	    Transaction.getCurrentJdbcConnection().createStatement().executeUpdate(clearDependenceRecordsQuery);
+	} catch (SQLException e) {
+	    throw new Error(e);
 	}
 
-	for (DomainMetaObject metaObject : getExistingDomainMetaObjects()) {
-	    metaObject.delete();
+	String clearIndirectionTable = "delete from FF$DEPENDED_DOMAIN_META_OBJECTS_DEPENDING_DEPENDENCE_RECORDS"
+		+ " where OID_DOMAIN_META_OBJECT in (" + metaObjectsToDeleteQuery + ")";
+
+	try {
+	    Transaction.getCurrentJdbcConnection().createStatement().executeUpdate(clearIndirectionTable);
+	} catch (SQLException e) {
+	    throw new Error(e);
 	}
 
-	removeDomainMetaSuperclass();
-	DomainFenixFrameworkRoot root = getDomainFenixFrameworkRoot();
-	if (root != null) {
-	    root.removeDomainMetaClasses(this);
+	String deleteMetaObjectsQuery = "delete from FF$DOMAIN_META_OBJECT where OID_DOMAIN_META_CLASS = '"
+		+ getExternalId() + "'";
+
+	try {
+	    Transaction.getCurrentJdbcConnection().createStatement().executeUpdate(deleteMetaObjectsQuery);
+	} catch (SQLException e) {
+	    throw new Error(e);
 	}
-	//Deletes THIS metaClass, which is also a Fenix-Framework DomainObject
-	deleteDomainObject();
     }
 
     public static DomainMetaClass readDomainMetaClass(Class<? extends AbstractDomainObject> domainClass) {

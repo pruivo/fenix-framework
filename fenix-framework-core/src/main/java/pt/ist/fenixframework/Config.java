@@ -210,20 +210,13 @@ public class Config {
      * objects, this may cause the next application startup to be very
      * slow.</strong><br>
      * <br>
-     * If set to true, the fenix-framework no longer supports:
-     * <ul>
-     * <li>overriding a consistency predicate with a non-predicate method</li>
-     * <li>removing from DML a domain class with already existing objects</li>
-     * <li>changing in DML the superclass of a domain class with already
-     * existing objects</li>
-     * </ul>
-     * 
-     * Any existing objects must be removed during runtime, before attempting
-     * these changes.<br>
+     * If set to true, the fenix-framework no longer supports overriding a
+     * consistency predicate with a non-predicate method.<br>
      * <br>
      * <strong>If a programmer changes the implementation of an existing
      * consistency predicate, he/she should always change the method's signature
-     * to force the fenix-framework to re-execute the predicate.</strong>
+     * to force the fenix-framework to re-execute the predicate and re-calculate
+     * its dependencies.</strong>
      * 
      * @see DomainMetaObject#delete()
      */

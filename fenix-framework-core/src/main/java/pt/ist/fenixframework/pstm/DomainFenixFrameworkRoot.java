@@ -632,7 +632,7 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 	    // This is necessary to split the load of the mass deletion of objects among several transactions.
 	    // Each transaction fully processes one DomainMetaClass.
 	    Transaction.beginTransaction();
-	    metaClass.massDelete();
+	    metaClass.delete();
 	}
     }
 }

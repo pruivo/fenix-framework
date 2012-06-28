@@ -218,6 +218,7 @@ public abstract class DomainConsistencyPredicate extends DomainConsistencyPredic
 	removeDomainMetaClass();
 	deleteDomainObject();
     }
+
     public static <PredicateT extends DomainConsistencyPredicate> PredicateT readDomainConsistencyPredicate(
 	    Class<? extends AbstractDomainObject> domainClass, String predicateName) {
 	return (PredicateT) DomainMetaClass.readDomainMetaClass(domainClass)

@@ -20,7 +20,6 @@ class DomainFenixFrameworkRoot {
 
 class DomainMetaClass {
 	String domainClassName;
-	Integer metaObjectCount;
 	Boolean finalized;
 }
 
