@@ -357,10 +357,11 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 	    // Each transaction processes one DomainMetaClass.
 	    Transaction.beginTransaction();
 	    DomainMetaClass newDomainMetaClass = new DomainMetaClass(domainClass);
+	    newDomainMetaClass.initExistingDomainObjects();
+
 	    if (hasSuperclassInDML(newDomainMetaClass)) {
 		newDomainMetaClass.initDomainMetaSuperclass(getDomainMetaSuperclassFromDML(newDomainMetaClass));
 	    }
-	    newDomainMetaClass.initExistingDomainObjects();
 
 	    // Because the initExistingDomainObjects method is split among several transactions,
 	    // the creation of the DomainMetaClass and its full initialization may not run atomically.

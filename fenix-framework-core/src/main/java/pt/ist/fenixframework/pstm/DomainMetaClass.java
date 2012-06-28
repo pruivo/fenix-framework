@@ -368,13 +368,16 @@ public class DomainMetaClass extends DomainMetaClass_Base {
     }
 
     /**
-     * This method should be called only during the initialization of the
-     * {@link FenixFramework}.
+     * Fills in the collections received as parameters with all the
+     * {@link DomainConsistencyPredicate}s that are either inherited, or
+     * declared by this DomainMetaClass.
      * 
-     * Initializes the superclass of this DomainMetaClass to the metaSuperClass
-     * passed as argument. Any inherited consistency predicates from the
-     * superclasses that are not being overridden, will be executed for each
-     * existing object of this DomainMetaClass.
+     * @param privatePredicates
+     *            the <code>List</code> of {@link PrivateConsistencyPredicate}s
+     *            to fill in
+     * @param publicPredicates
+     *            the <code>Map</code> of <code>Strings</code> to
+     *            {@link PublicConsistencyPredicate}s to fill in
      */
     private void fillConsistencyPredicatesOfThisClassAndSuperclasses(List<PrivateConsistencyPredicate> privatePredicates,
 	    Map<String, PublicConsistencyPredicate> publicPredicates) {
