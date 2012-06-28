@@ -133,7 +133,7 @@ public abstract class DomainConsistencyPredicate extends DomainConsistencyPredic
 	if (domainObjects.isEmpty() || getPredicate() == null) {
 	    return;
 	}
-	System.out.println("[ConsistencyPredicates] Executing startup Consistency Predicate: " + getPredicate().getName());
+	System.out.println("[DomainConsistencyPredicate] Executing startup consistency predicate: " + getPredicate().getName());
 	for (AbstractDomainObject existingDomainObject : domainObjects) {
 	    Pair pair = executePredicateForOneObject(existingDomainObject, getPredicate());
 	    if (pair != null) {
@@ -210,7 +210,7 @@ public abstract class DomainConsistencyPredicate extends DomainConsistencyPredic
      **/
     public void classDelete() {
 	checkFrameworkNotInitialized();
-	System.out.println("[ConsistencyPredicates] Deleting predicate " + getPredicate()
+	System.out.println("[DomainConsistencyPredicate] Deleting predicate " + getPredicate()
 		+ ((getPredicate() == null) ? " of " + getDomainMetaClass().getDomainClass() : ""));
 	for (DomainDependenceRecord dependenceRecord : getDomainDependenceRecords()) {
 	    dependenceRecord.delete();

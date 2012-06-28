@@ -98,7 +98,7 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 	setDomainClass(domainClass);
 	DomainFenixFrameworkRoot.getInstance().addDomainMetaClasses(this);
 
-	System.out.println("[MetaClasses] Creating new MetaClass: " + domainClass);
+	System.out.println("[DomainMetaClass] Creating new a DomainMetaClass: " + domainClass);
     }
 
     public DomainMetaClass(Class<? extends AbstractDomainObject> domainClass, DomainMetaClass metaSuperclass) {
@@ -351,7 +351,7 @@ public class DomainMetaClass extends DomainMetaClass_Base {
     public void initDomainMetaSuperclass(DomainMetaClass metaSuperclass) {
 	checkFrameworkNotInitialized();
 	setDomainMetaSuperclass(metaSuperclass);
-	System.out.println("[MetaClasses] Initializing MetaSuperClass of " + getDomainClass() + " to "
+	System.out.println("[DomainMetaClass] Initializing the meta-superclass of " + getDomainClass() + " to "
 		+ metaSuperclass.getDomainClass());
 
 	List<PrivateConsistencyPredicate> privatePredicates = new ArrayList<PrivateConsistencyPredicate>();
@@ -453,7 +453,7 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 	    metaSubclass.delete();
 	}
 
-	System.out.println("[MetaClasses] Deleted metaClass " + getDomainClassName());
+	System.out.println("[DomainMetaClass] Deleted DomainMetaClass " + getDomainClassName());
 	for (DomainConsistencyPredicate domainConsistencyPredicate : getDeclaredConsistencyPredicates()) {
 	    domainConsistencyPredicate.classDelete();
 	}
@@ -486,7 +486,9 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 	try {
 	    Transaction.getCurrentJdbcConnection().createStatement().executeUpdate(clearDomainObjectsQuery);
 	} catch (SQLException e) {
-	    throw new Error(e);
+	    System.out.println("[DomainMetaClass] WARNING: The deleted DomainMetaClass " + getDomainClassName()
+		    + " had a table named " + tableName + " that no longer exists.");
+	    e.printStackTrace();
 	}
 
 	String clearDependenceRecordsQuery = "delete from FF$DOMAIN_DEPENDENCE_RECORD where OID_DEPENDENT_DOMAIN_META_OBJECT "

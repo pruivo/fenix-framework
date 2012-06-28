@@ -279,7 +279,7 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 	for (DomainMetaClass metaClass : existingMetaClassesToUpdate) {
 	    if (!metaClass.hasDomainMetaSuperclass()) {
 		if (hasSuperclassInDML(metaClass)) {
-		    System.out.println("[MetaClasses] MetaClass " + metaClass.getDomainClass().getSimpleName()
+		    System.out.println("[DomainMetaClass] DomainMetaClass " + metaClass.getDomainClass().getSimpleName()
 			    + " (and subclasses') hierarchy has changed...");
 		    metaClass.delete();
 		}
@@ -289,7 +289,7 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 		    currentMetaSuperclass = getDomainMetaSuperclassFromDML(metaClass);
 		}
 		if (currentMetaSuperclass != metaClass.getDomainMetaSuperclass()) {
-		    System.out.println("[MetaClasses] MetaClass " + metaClass.getDomainClass().getSimpleName()
+		    System.out.println("[DomainMetaClass] DomainMetaClass " + metaClass.getDomainClass().getSimpleName()
 			    + " (and subclasses') hierarchy has changed...");
 		    metaClass.delete();
 		}
