@@ -14,6 +14,7 @@ import pt.ist.fenixframework.pstm.DomainFenixFrameworkRoot;
 import pt.ist.fenixframework.pstm.DomainMetaClass;
 import pt.ist.fenixframework.pstm.FenixConsistencyCheckTransaction;
 import pt.ist.fenixframework.pstm.NoDomainMetaObjects;
+import pt.ist.fenixframework.pstm.TopLevelTransaction;
 import pt.ist.fenixframework.pstm.TopLevelTransaction.Pair;
 import pt.ist.fenixframework.pstm.Transaction;
 
@@ -136,8 +137,12 @@ public abstract class DomainConsistencyPredicate extends DomainConsistencyPredic
 	System.out.println("[DomainConsistencyPredicate] Executing startup consistency predicate: " + getPredicate().getName());
 	for (AbstractDomainObject existingDomainObject : domainObjects) {
 	    Pair pair = executePredicateForOneObject(existingDomainObject, getPredicate());
+	    // Predicates that were already checked return null
 	    if (pair != null) {
-		new DomainDependenceRecord(existingDomainObject, this, (Set<Depended>) pair.first, (Boolean) pair.second);
+		// If an object is consistent and depends only on itself, the DomainDependenceRecord is not necessary.
+		if (!(TopLevelTransaction.isConsistent(pair) && TopLevelTransaction.dependsOnlyOnItself(pair))) {
+		    new DomainDependenceRecord(existingDomainObject, this, (Set<Depended>) pair.first, (Boolean) pair.second);
+		}
 	    }
 	}
     }
@@ -159,7 +164,7 @@ public abstract class DomainConsistencyPredicate extends DomainConsistencyPredic
      *         consistency, and a boolean that indicates if the object is
      *         consistent or not
      */
-    private static Pair executePredicateForOneObject(Object obj, Method predicate) {
+    private static Pair executePredicateForOneObject(AbstractDomainObject obj, Method predicate) {
 	// starts a new transaction where the readSet used by the predicate will be collected.
 	ConsistencyCheckTransaction tx = new FenixConsistencyCheckTransaction(Transaction.currentFenixTransaction(), obj);
 	tx.start();
@@ -169,12 +174,20 @@ public abstract class DomainConsistencyPredicate extends DomainConsistencyPredic
 	    // and the result of the predicate (consistent or not)
 	    Boolean predicateResult = (Boolean) predicate.invoke(obj);
 	    Transaction.commit();
-	    return new Pair(tx.getDepended(), predicateResult);
+
+	    // Do not register the own object as a depended
+	    Set<Depended> depended = tx.getDepended();
+	    depended.remove(obj.getDomainMetaObject());
+	    return new Pair(depended, predicateResult);
 	} catch (InvocationTargetException ite) {
 	    // if an exception is thrown during the execution of the predicate,
 	    // the object is NOT consistent
 	    Transaction.commit();
-	    return new Pair(tx.getDepended(), false);
+
+	    // Do not register the own object as a depended
+	    Set<Depended> depended = tx.getDepended();
+	    depended.remove(obj.getDomainMetaObject());
+	    return new Pair(depended, false);
 	} catch (Throwable t) {
 	    // any other kind of throwable is an Error in the framework that should be fixed
 	    throw new Error(t);

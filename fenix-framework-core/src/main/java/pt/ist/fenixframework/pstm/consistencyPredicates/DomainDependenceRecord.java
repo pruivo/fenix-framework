@@ -14,9 +14,17 @@ import pt.ist.fenixframework.pstm.NoDomainMetaObjects;
  * A <code>DomainDependenceRecord</code> represents the result of the execution
  * of a consistency predicate method for a dependent domain object. The
  * <code>DomainDependenceRecord</code> has a set of depended
- * {@link DomainMetaObject}s, that represent the domain objects that were read
- * to execute the consistency predicate. If any of these objects is modified,
- * the consistency predicate must be reexecuted.
+ * {@link DomainMetaObject}s, that represent the other domain objects that were
+ * read to execute the consistency predicate. If any of these objects is
+ * modified, the consistency predicate must be reexecuted.<br>
+ * <br>
+ * A <code>DomainDependenceRecord</code> will never register the dependent
+ * object as a depended object. After executing a consistency predicate, a
+ * <code>DomainDependenceRecord</code> will not even be created if:
+ * <ul>
+ * <li>the object does not depend on other objects, and</li>
+ * <li>the object is consistent</li>
+ * </ul>
  * 
  * @author João Neves - JoaoRoxoNeves@ist.utl.pt
  **/
