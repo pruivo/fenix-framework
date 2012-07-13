@@ -1,3 +1,5 @@
+/* PersistentRoot */
+
 package pt.ist.fenixframework.pstm;
 
 
@@ -14,6 +16,69 @@ class PersistentRoot {
 	String rootKey;
 }
 
+
+
+
+
+relation MultipleRoots {
+	PersistentRoot playsRole previous;
+	PersistentRoot playsRole next;
+}
+
+
+relation PersistentRootAbstractDomainObject {
+ AbstractDomainObject playsRole rootObject;
+ PersistentRoot playsRole;
+}
+
+
+
+/* This section pertains to support for persistent collections using B+Trees */
+
+package pt.ist.fenixframework.pstm.collections.bplustree;
+
+class BPlusTree {}
+
+class AbstractNode {}
+
+class LeafNode extends AbstractNode {
+    // key: any OID
+    // value: any reference to a domainObject
+    TreeMap<Long,pt.ist.fenixframework.DomainObject> entries;
+}
+
+class InnerNode extends AbstractNode {
+    // A B-Tree node contains M keys and M+1 children.  We represent the first
+    // M children aggregated with a key and add a special LAST_KEY for the
+    // M+1-th children.  This way the i-th child always contains elements
+    // whose keys are less than the i-th key.
+    // key: any OID
+    // value: a Node
+    TreeMap<Long,AbstractNode> subNodes;
+}
+
+relation BPlusTreeHasRootNode {
+    BPlusTree playsRole;
+    AbstractNode playsRole root;
+}
+
+relation NodeHasParent {
+    AbstractNode playsRole {
+	multiplicity *;
+    }
+    InnerNode playsRole parent;
+}
+
+relation LeafNodeHasSibling {
+    LeafNode playsRole previous;
+    LeafNode playsRole next;
+}
+
+
+
+/* MetaObjects, MetaClasses and ConsistencyPredicates */
+
+package pt.ist.fenixframework.pstm;
 
 class DomainFenixFrameworkRoot {
 }
@@ -46,21 +111,6 @@ class DomainMetaObject {
 
 
 
-
-
-relation MultipleRoots {
-	PersistentRoot playsRole previous;
-	PersistentRoot playsRole next;
-}
-
-
-relation PersistentRootAbstractDomainObject {
- AbstractDomainObject playsRole rootObject;
- PersistentRoot playsRole;
-}
-
-
-
 relation DomainFenixFrameworkRootDomainMetaClasses {
 	DomainFenixFrameworkRoot playsRole domainFenixFrameworkRoot;
 	DomainMetaClass playsRole domainMetaClasses {
@@ -76,11 +126,14 @@ relation DomainMetaSuperclassDomainMetaSubclasses {
 	}
 }
 
-relation DomainMetaClassDomainMetaObjects {
-	DomainMetaObject playsRole existingDomainMetaObjects {
-		multiplicity*;
-	}
+relation DomainMetaObjectsDomainMetaClass {
+	DomainMetaObject playsRole;
 	DomainMetaClass playsRole domainMetaClass;
+}
+
+relation DomainMetaClassExistingDomainMetaObjects {
+	collections.bplustree.BPlusTree playsRole existingDomainMetaObjects;
+	DomainMetaClass playsRole;
 }
 
 

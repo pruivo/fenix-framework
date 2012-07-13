@@ -39,7 +39,7 @@ public abstract class AbstractDomainObject implements DomainObject, dml.runtime.
 	    DomainMetaObject metaObject = new DomainMetaObject();
 	    metaObject.setDomainObject(this);
 
-	    getDomainMetaClass().addExistingDomainMetaObjects(getDomainMetaObject());
+	    getDomainMetaClass().addExistingDomainMetaObject(getDomainMetaObject());
 	}
     }
 

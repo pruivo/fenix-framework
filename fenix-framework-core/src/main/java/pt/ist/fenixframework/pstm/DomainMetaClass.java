@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 import pt.ist.fenixframework.FenixFramework;
+import pt.ist.fenixframework.pstm.collections.bplustree.BPlusTree;
 import pt.ist.fenixframework.pstm.consistencyPredicates.DomainConsistencyPredicate;
 import pt.ist.fenixframework.pstm.consistencyPredicates.DomainDependenceRecord;
 import pt.ist.fenixframework.pstm.consistencyPredicates.PrivateConsistencyPredicate;
@@ -97,6 +98,7 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 	checkFrameworkNotInitialized();
 	setDomainClass(domainClass);
 	DomainFenixFrameworkRoot.getInstance().addDomainMetaClasses(this);
+	setExistingDomainMetaObjects(new BPlusTree<DomainMetaObject>());
 
 	System.out.println("[DomainMetaClass] Creating new a DomainMetaClass: " + domainClass);
     }
@@ -187,6 +189,15 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 	return existingDomainObjects;
     }
 
+    @Override
+    public BPlusTree<DomainMetaObject> getExistingDomainMetaObjects() {
+	return super.getExistingDomainMetaObjects();
+    }
+
+    public void addExistingDomainMetaObject(DomainMetaObject metaObject) {
+	getExistingDomainMetaObjects().insert(metaObject.getOid(), metaObject);
+    }
+
     public <PredicateT extends DomainConsistencyPredicate> PredicateT getDeclaredConsistencyPredicate(Method predicateMethod) {
 	for (DomainConsistencyPredicate declaredConsistencyPredicate : getDeclaredConsistencyPredicates()) {
 	    if (declaredConsistencyPredicate.getPredicate().equals(predicateMethod)) {
@@ -241,7 +252,7 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 		}
 		DomainMetaObject metaObject = new DomainMetaObject();
 		metaObject.setDomainObject(existingDO);
-		addExistingDomainMetaObjects(metaObject);
+		addExistingDomainMetaObject(metaObject);
 	    }
 
 	    // Commits the current, and starts a new write transaction.
@@ -511,6 +522,11 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 	} catch (SQLException e) {
 	    throw new Error(e);
 	}
+
+	// Delete the BPlusTree that linked to the existing DomainMetaObjects
+	BPlusTree<DomainMetaObject> bPlusTree = getExistingDomainMetaObjects();
+	bPlusTree.delete();
+	removeExistingDomainMetaObjects();
 
 	String deleteMetaObjectsQuery = "delete from FF$DOMAIN_META_OBJECT where OID_DOMAIN_META_CLASS = '"
 		+ getExternalId() + "'";
