@@ -194,6 +194,10 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 	return super.getExistingDomainMetaObjects();
     }
 
+    public int getExistingDomainMetaObjectsCount() {
+	return getExistingDomainMetaObjects().size();
+    }
+
     public void addExistingDomainMetaObject(DomainMetaObject metaObject) {
 	getExistingDomainMetaObjects().insert(metaObject.getOid(), metaObject);
     }
