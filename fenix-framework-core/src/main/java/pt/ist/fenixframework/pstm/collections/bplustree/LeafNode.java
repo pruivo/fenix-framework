@@ -7,7 +7,9 @@ import java.util.NoSuchElementException;
 import java.util.TreeMap;
 
 import pt.ist.fenixframework.DomainObject;
+import pt.ist.fenixframework.pstm.NoDomainMetaObjects;
 
+@NoDomainMetaObjects
 public class LeafNode extends LeafNode_Base {
     
     public LeafNode() {

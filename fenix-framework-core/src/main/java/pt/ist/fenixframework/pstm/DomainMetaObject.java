@@ -50,7 +50,7 @@ public class DomainMetaObject extends DomainMetaObject_Base implements Depended<
      * <strong>depending</strong> dependence records of this object.
      **/
     protected void delete() {
-	removeDomainMetaClass();
+	getDomainMetaClass().removeExistingDomainMetaObject(this);
 
 	// Removes the dependencies from other objects.
 	// Because the object was disconnected from all relations, any depending objects

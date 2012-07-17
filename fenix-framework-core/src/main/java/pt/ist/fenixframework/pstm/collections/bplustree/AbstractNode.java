@@ -7,8 +7,10 @@ import java.util.TreeMap;
 import pt.ist.fenixframework.DomainObject;
 import pt.ist.fenixframework.Externalization;
 import pt.ist.fenixframework.pstm.AbstractDomainObject;
+import pt.ist.fenixframework.pstm.NoDomainMetaObjects;
 
 /** The keys comparison function should be consistent with equals. */
+@NoDomainMetaObjects
 public abstract class AbstractNode<T extends DomainObject> extends AbstractNode_Base implements Iterable {
     /* Node Interface */
 

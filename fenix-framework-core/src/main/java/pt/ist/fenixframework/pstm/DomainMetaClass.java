@@ -200,6 +200,12 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 
     public void addExistingDomainMetaObject(DomainMetaObject metaObject) {
 	getExistingDomainMetaObjects().insert(metaObject.getOid(), metaObject);
+	metaObject.setDomainMetaClass(this);
+    }
+
+    public void removeExistingDomainMetaObject(DomainMetaObject metaObject) {
+	getExistingDomainMetaObjects().remove(metaObject.getOid());
+	metaObject.removeDomainMetaClass();
     }
 
     public <PredicateT extends DomainConsistencyPredicate> PredicateT getDeclaredConsistencyPredicate(Method predicateMethod) {

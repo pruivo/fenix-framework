@@ -4,7 +4,9 @@ import java.util.Comparator;
 import java.util.Iterator;
 
 import pt.ist.fenixframework.DomainObject;
+import pt.ist.fenixframework.pstm.NoDomainMetaObjects;
 
+@NoDomainMetaObjects
 public class BPlusTree<T extends DomainObject> extends BPlusTree_Base implements Iterable<T> {
     
     // public  BPlusTree() {

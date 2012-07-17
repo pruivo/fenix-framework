@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import pt.ist.fenixframework.DomainObject;
+import pt.ist.fenixframework.pstm.NoDomainMetaObjects;
 
 /** 
  * Inner node of a B+-Tree.  These nodes do not contain elements.  They only
@@ -13,6 +14,7 @@ import pt.ist.fenixframework.DomainObject;
  * last sub-node (L) which will contain elements whose keys will be greater
  * than or equal to the M-th key.
  */
+@NoDomainMetaObjects
 public class InnerNode extends InnerNode_Base {
 
     private InnerNode() {
