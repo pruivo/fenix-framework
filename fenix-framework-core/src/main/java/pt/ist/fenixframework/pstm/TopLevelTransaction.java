@@ -667,7 +667,9 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
 
 		// Do not register the own object as a depended
 		Set<Depended> depended = tx.getDepended();
-		depended.remove(obj.getDomainMetaObject());
+		if (!depended.isEmpty()) {
+		    depended.remove(obj.getDomainMetaObject());
+		}
 		return new Pair(depended, false);
 	    }
 	    Throwable cause = ite.getCause();
@@ -701,7 +703,9 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
 	if (predicateOk) {
 	    // Do not register the own object as a depended
 	    Set<Depended> depended = tx.getDepended();
-	    depended.remove(obj.getDomainMetaObject());
+	    if (!depended.isEmpty()) {
+		depended.remove(obj.getDomainMetaObject());
+	    }
 	    return new Pair(depended, true);
 	} else if (inconsistencyTolerant && !wasConsistent) {
 	    // if the predicate is inconsistency-tolerant, and we are editing an object
@@ -710,7 +714,9 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
 
 	    // Do not register the own object as a depended
 	    Set<Depended> depended = tx.getDepended();
-	    depended.remove(obj.getDomainMetaObject());
+	    if (!depended.isEmpty()) {
+		depended.remove(obj.getDomainMetaObject());
+	    }
 	    return new Pair(depended, false);
 	}
 	ConsistencyException exc;

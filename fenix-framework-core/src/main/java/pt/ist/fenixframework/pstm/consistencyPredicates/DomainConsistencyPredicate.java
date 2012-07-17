@@ -177,7 +177,9 @@ public abstract class DomainConsistencyPredicate extends DomainConsistencyPredic
 
 	    // Do not register the own object as a depended
 	    Set<Depended> depended = tx.getDepended();
-	    depended.remove(obj.getDomainMetaObject());
+	    if (!depended.isEmpty()) {
+		depended.remove(obj.getDomainMetaObject());
+	    }
 	    return new Pair(depended, predicateResult);
 	} catch (InvocationTargetException ite) {
 	    // if an exception is thrown during the execution of the predicate,
@@ -186,7 +188,9 @@ public abstract class DomainConsistencyPredicate extends DomainConsistencyPredic
 
 	    // Do not register the own object as a depended
 	    Set<Depended> depended = tx.getDepended();
-	    depended.remove(obj.getDomainMetaObject());
+	    if (!depended.isEmpty()) {
+		depended.remove(obj.getDomainMetaObject());
+	    }
 	    return new Pair(depended, false);
 	} catch (Throwable t) {
 	    // any other kind of throwable is an Error in the framework that should be fixed
