@@ -4,6 +4,7 @@ import java.util.Set;
 
 import jvstm.cps.Depended;
 import pt.ist.fenixframework.Config;
+import pt.ist.fenixframework.pstm.consistencyPredicates.DomainConsistencyPredicate;
 import pt.ist.fenixframework.pstm.consistencyPredicates.DomainDependenceRecord;
 
 /**
@@ -78,6 +79,29 @@ public class DomainMetaObject extends DomainMetaObject_Base implements Depended<
 	// and it's metaObject is only partially implemented in DML.
 	super.setDomainObject(domainObject);
 	domainObject.justSetMetaObject(this);
+    }
+
+    /**
+     * @return The {@link DomainDependenceRecord} of this
+     *         <code>DomainMetaObject</code> for the
+     *         {@link DomainConsistencyPredicate} passed as argument
+     */
+    public DomainDependenceRecord getOwnDependenceRecord(DomainConsistencyPredicate predicate) {
+	for (DomainDependenceRecord dependenceRecord : getOwnDependenceRecords()) {
+	    if (dependenceRecord.getDomainConsistencyPredicate() == predicate) {
+		return dependenceRecord;
+	    }
+	}
+	return null;
+    }
+
+    /**
+     * @return true if this <code>DomainMetaObject</code> has a
+     *         {@link DomainDependenceRecord} for the
+     *         {@link DomainConsistencyPredicate} passed as argument
+     */
+    public boolean hasOwnDependenceRecord(DomainConsistencyPredicate predicate) {
+	return getOwnDependenceRecord(predicate) != null;
     }
 
     @Override

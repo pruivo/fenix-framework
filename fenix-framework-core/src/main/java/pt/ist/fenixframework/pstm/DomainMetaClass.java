@@ -39,7 +39,7 @@ import pt.ist.fenixframework.pstm.repository.DbUtil;
 @NoDomainMetaObjects
 public class DomainMetaClass extends DomainMetaClass_Base {
 
-    private static final int MAX_NUM_OF_META_OBJECTS_TO_CREATE = 200000;
+    private static final int MAX_NUMBER_OF_OBJECTS_TO_PROCESS = 200000;
 
     /**
      * Compares two classes according to their hierarchies, such that a
@@ -177,18 +177,6 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 	super.setFinalized(finalized);
     }
 
-    /**
-     * @return the <code>List</code> of existing {@link AbstractDomainObject}s
-     *         of this class.
-     */
-    public List<AbstractDomainObject> getExistingDomainObjects() {
-	List<AbstractDomainObject> existingDomainObjects = new ArrayList<AbstractDomainObject>();
-	for (DomainMetaObject metaObject : getExistingDomainMetaObjects()) {
-	    existingDomainObjects.add(metaObject.getDomainObject());
-	}
-	return existingDomainObjects;
-    }
-
     @Override
     public BPlusTree<DomainMetaObject> getExistingDomainMetaObjects() {
 	return super.getExistingDomainMetaObjects();
@@ -267,7 +255,7 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 
 	    // Commits the current, and starts a new write transaction.
 	    // This is necessary to split the load of the mass creation of DomainMetaObjects among several transactions.
-	    // Each transaction processes a maximum of 200k objects in order to avoid OutOfMemory exceptions.
+	    // Each transaction processes a maximum of MAX_NUMBER_OF_OBJECTS_TO_PROCESS objects in order to avoid OutOfMemoryExceptions.
 	    // Because the JDBC query only returns objects that have no DomainMetaObjects, there is no problem with
 	    // processing only an incomplete part of the objects of this class.
 	    Transaction.beginTransaction();
@@ -281,7 +269,7 @@ public class DomainMetaClass extends DomainMetaClass_Base {
      * {@link DomainMetaObject}.<br>
      * <br>
      * This method only returns a <strong>maximum of
-     * MAX_NUM_OF_META_OBJECTS_TO_CREATE</strong> OIDs.
+     * MAX_NUMBER_OF_OBJECTS_TO_PROCESS</strong> OIDs.
      * 
      * @param domainClass
      *            the <code>Class</code> for which to obtain the existing
@@ -297,7 +285,7 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 
 	String query = "select OID from " + tableName
 		+ ", FF$DOMAIN_CLASS_INFO where OID >> 32 = DOMAIN_CLASS_ID and DOMAIN_CLASS_NAME = '" + className
-		+ "' and OID_DOMAIN_META_OBJECT is null limit " + MAX_NUM_OF_META_OBJECTS_TO_CREATE;
+		+ "' and OID_DOMAIN_META_OBJECT is null limit " + MAX_NUMBER_OF_OBJECTS_TO_PROCESS;
 
 	ArrayList<String> oids = new ArrayList<String>();
 	try {

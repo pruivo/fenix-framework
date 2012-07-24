@@ -2,11 +2,11 @@ package pt.ist.fenixframework.pstm.consistencyPredicates;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.List;
 
-import pt.ist.fenixframework.pstm.AbstractDomainObject;
 import pt.ist.fenixframework.pstm.DomainMetaClass;
+import pt.ist.fenixframework.pstm.DomainMetaObject;
 import pt.ist.fenixframework.pstm.NoDomainMetaObjects;
+import pt.ist.fenixframework.pstm.collections.bplustree.BPlusTree;
 
 /**
  * A <code>PublicConsistencyPredicate</code> is a
@@ -104,7 +104,7 @@ public class PublicConsistencyPredicate extends PublicConsistencyPredicate_Base 
      * given metaClass downwards.
      */
     private void removeDomainDependenceRecordsForMetaClassAndSubclasses(DomainMetaClass metaClass) {
-	removeDomainDependenceRecordsForExistingDomainObjects(metaClass.getExistingDomainObjects());
+	removeDomainDependenceRecordsForExistingObjects(metaClass);
 
 	for (DomainMetaClass metaSubclass : metaClass.getDomainMetaSubclasses()) {
 	    removeDomainDependenceRecordsForMetaClassAndSubclasses(metaSubclass);
@@ -112,12 +112,14 @@ public class PublicConsistencyPredicate extends PublicConsistencyPredicate_Base 
     }
 
     /**
-     * Deletes this predicate's {@link DomainDependenceRecord}s for given
-     * <code>List</code> of objects.
+     * Deletes this predicate's {@link DomainDependenceRecord}s for the existing
+     * objects of the given {@link DomainMetaClass}.
      */
-    private void removeDomainDependenceRecordsForExistingDomainObjects(List<AbstractDomainObject> existingObjects) {
-	for (DomainDependenceRecord dependenceRecord : getDomainDependenceRecords()) {
-	    if (existingObjects.contains(dependenceRecord.getDependent())) {
+    private void removeDomainDependenceRecordsForExistingObjects(DomainMetaClass metaClass) {
+	BPlusTree<DomainMetaObject> existingObjects = metaClass.getExistingDomainMetaObjects();
+	for (DomainMetaObject metaObject : existingObjects) {
+	    DomainDependenceRecord dependenceRecord = metaObject.getOwnDependenceRecord(this);
+	    if (dependenceRecord != null) {
 		dependenceRecord.delete();
 	    }
 	}
@@ -188,7 +190,7 @@ public class PublicConsistencyPredicate extends PublicConsistencyPredicate_Base 
     public void executeConsistencyPredicateForMetaClassAndSubclasses(DomainMetaClass metaClass) {
 	if (metaClass == getDomainMetaClass()) {
 	    // The metaClass is this very predicate's declaring class, so it is not a subclass yet.
-	    executeConsistencyPredicateForExistingDomainObjects(metaClass.getExistingDomainObjects());
+	    executeConsistencyPredicateForExistingDomainObjects(metaClass);
 	} else {
 	    try {
 		metaClass.getDomainClass().getDeclaredMethod(getPredicate().getName());
@@ -197,7 +199,7 @@ public class PublicConsistencyPredicate extends PublicConsistencyPredicate_Base 
 		return;
 	    } catch (NoSuchMethodException e) {
 		// The method is not being overridden here, so proceed with the execution for this subclass.
-		executeConsistencyPredicateForExistingDomainObjects(metaClass.getExistingDomainObjects());
+		executeConsistencyPredicateForExistingDomainObjects(metaClass);
 	    }
 	}
 
@@ -216,6 +218,7 @@ public class PublicConsistencyPredicate extends PublicConsistencyPredicate_Base 
      *             if this predicate is being overridden by a non-predicate
      *             method
      */
+    @Override
     public void checkOverridingMethods(DomainMetaClass metaClass) {
 	if (metaClass == getDomainMetaClass()) {
 	    // The metaClass is this very predicate's declaring class, so it is not a subclass yet.

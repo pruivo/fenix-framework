@@ -242,7 +242,7 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
     }
 
     /**
-     * Finishes the initialization of any {@link DomainMetaClass}es that was not
+     * Finishes the initialization of any {@link DomainMetaClass} that was not
      * yet finalized.<br>
      * 
      * @param existingMetaClassesToFinalize
@@ -254,7 +254,8 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 	    if (metaClass.isFinalized()) {
 		continue;
 	    }
-
+	    // Commits the current, and starts a new write transaction.
+	    Transaction.beginTransaction();
 	    metaClass.initExistingDomainObjects();
 
 	    // Because the initExistingDomainObjects method is split among several transactions,
@@ -353,8 +354,6 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
     private void createNewMetaClasses(Collection<Class<? extends AbstractDomainObject>> newClassesToAddTopDown) {
 	for (Class<? extends AbstractDomainObject> domainClass : newClassesToAddTopDown) {
 	    // Commits the current, and starts a new write transaction.
-	    // This is necessary to split the load of the mass creation of DomainMetaObjects among several transactions.
-	    // Each transaction processes one DomainMetaClass.
 	    Transaction.beginTransaction();
 	    DomainMetaClass newDomainMetaClass = new DomainMetaClass(domainClass);
 	    newDomainMetaClass.initExistingDomainObjects();
@@ -512,13 +511,18 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
     private void createAndExecuteNewPredicates(Set<Method> newPredicatesToAdd, DomainMetaClass metaClass) {
 	for (Method predicateMethod : newPredicatesToAdd) {
 	    // Commits the current, and starts a new write transaction.
-	    // This is necessary to split the load of the mass creation of DomainDependenceRecords among several transactions.
-	    // Each transaction fully processes one DomainConsistencyPredicate.
 	    Transaction.beginTransaction();
 	    DomainConsistencyPredicate newConsistencyPredicate = DomainConsistencyPredicate.createNewDomainConsistencyPredicate(
 		    predicateMethod, metaClass);
 	    newConsistencyPredicate.initConsistencyPredicateOverridden();
 	    newConsistencyPredicate.executeConsistencyPredicateForMetaClassAndSubclasses(metaClass);
+
+	    // Because the executeConsistencyPredicateForMetaClassAndSubclasses method is split among several transactions,
+	    // the creation of the DomainConsistencyPredicate and its full initialization may not run atomically.
+	    // In case of a system failure during the execution of the executeConsistencyPredicateForMetaClassAndSubclasses method,
+	    // the DomainConsistencyPredicate was already created, but not yet fully initialized.
+	    // The init is only considered completed when finalized is set to true.
+	    newConsistencyPredicate.setFinalized(true);
 	}
     }
 
@@ -578,6 +582,7 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
     private void processExistingPredicates(Collection<DomainConsistencyPredicate> existingPredicatesToProcess,
 	    DomainMetaClass metaClass) {
 	updateExistingPredicates(existingPredicatesToProcess, metaClass);
+	finishInitializingConsistencyPredicates(existingPredicatesToProcess, metaClass);
     }
 
     /**
@@ -599,6 +604,36 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 	    DomainMetaClass metaClass) {
 	for (DomainConsistencyPredicate knownConsistencyPredicate : existingPredicatesToUpdate) {
 	    knownConsistencyPredicate.updateConsistencyPredicateOverridden();
+	}
+    }
+
+    /**
+     * Finishes the initialization of any {@link DomainConsistencyPredicate}
+     * that was not yet finalized.<br>
+     * 
+     * @param existingPredicatesToProcess
+     *            the <code>Collection</code> of
+     *            {@link DomainConsistencyPredicate}s to be finalized
+     * @param metaClass
+     *            the {@link DomainMetaClass} that declares the
+     *            {@link DomainConsistencyPredicate}s to be finalized
+     */
+    private void finishInitializingConsistencyPredicates(Collection<DomainConsistencyPredicate> existingPredicatesToProcess,
+	    DomainMetaClass metaClass) {
+	for (DomainConsistencyPredicate consistencyPredicate : existingPredicatesToProcess) {
+	    if (consistencyPredicate.isFinalized()) {
+		continue;
+	    }
+	    // Commits the current, and starts a new write transaction.
+	    Transaction.beginTransaction();
+	    consistencyPredicate.executeConsistencyPredicateForMetaClassAndSubclasses(metaClass);
+
+	    // Because the executeConsistencyPredicateForMetaClassAndSubclasses method is split among several transactions,
+	    // the creation of the DomainConsistencyPredicate and its full initialization may not run atomically.
+	    // In case of a system failure during the execution of the executeConsistencyPredicateForMetaClassAndSubclasses method,
+	    // the DomainConsistencyPredicate was already created, but not yet fully initialized.
+	    // The init is only considered completed when finalized is set to true.
+	    consistencyPredicate.setFinalized(true);
 	}
     }
 

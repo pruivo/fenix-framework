@@ -3,7 +3,6 @@ package pt.ist.fenixframework.pstm.consistencyPredicates;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.List;
 import java.util.Set;
 
 import jvstm.cps.ConsistencyCheckTransaction;
@@ -12,11 +11,13 @@ import pt.ist.fenixframework.FenixFramework;
 import pt.ist.fenixframework.pstm.AbstractDomainObject;
 import pt.ist.fenixframework.pstm.DomainFenixFrameworkRoot;
 import pt.ist.fenixframework.pstm.DomainMetaClass;
+import pt.ist.fenixframework.pstm.DomainMetaObject;
 import pt.ist.fenixframework.pstm.FenixConsistencyCheckTransaction;
 import pt.ist.fenixframework.pstm.NoDomainMetaObjects;
 import pt.ist.fenixframework.pstm.TopLevelTransaction;
 import pt.ist.fenixframework.pstm.TopLevelTransaction.Pair;
 import pt.ist.fenixframework.pstm.Transaction;
+import pt.ist.fenixframework.pstm.collections.bplustree.BPlusTree;
 
 /**
  * A <code>DomainConsistencyPredicate</code> is the persistent domain entity
@@ -28,6 +29,8 @@ import pt.ist.fenixframework.pstm.Transaction;
  **/
 @NoDomainMetaObjects
 public abstract class DomainConsistencyPredicate extends DomainConsistencyPredicate_Base {
+
+    private static final int MAX_NUMBER_OF_OBJECTS_TO_PROCESS = 100000;
 
     public DomainConsistencyPredicate() {
 	super();
@@ -55,6 +58,10 @@ public abstract class DomainConsistencyPredicate extends DomainConsistencyPredic
     public abstract boolean isPrivate();
 
     public abstract boolean isFinal();
+
+    public boolean isFinalized() {
+	return getFinalized();
+    }
 
     @Override
     public Method getPredicate() {
@@ -125,24 +132,38 @@ public abstract class DomainConsistencyPredicate extends DomainConsistencyPredic
      * creates a {@link DomainDependenceRecord} based on the dependencies of
      * that object.
      * 
-     * @param domainObjects
-     *            the <code>List</code> of {@link AbstractDomainObject} for
-     *            which to execute this predicate.
+     * @param metaClass
+     *            the {@link DomainMetaClass} of {@link AbstractDomainObject}
+     *            for which to execute this predicate.
      */
-    protected void executeConsistencyPredicateForExistingDomainObjects(List<AbstractDomainObject> domainObjects) {
+    protected void executeConsistencyPredicateForExistingDomainObjects(DomainMetaClass metaClass) {
+	BPlusTree<DomainMetaObject> metaObjects = metaClass.getExistingDomainMetaObjects();
 	checkFrameworkNotInitialized();
-	if (domainObjects.isEmpty() || getPredicate() == null) {
+	if (metaObjects.isEmpty() || getPredicate() == null) {
 	    return;
 	}
 	System.out.println("[DomainConsistencyPredicate] Executing startup consistency predicate: " + getPredicate().getName());
-	for (AbstractDomainObject existingDomainObject : domainObjects) {
-	    Pair pair = executePredicateForOneObject(existingDomainObject, getPredicate());
-	    // Predicates that were already checked return null
-	    if (pair != null) {
-		// If an object is consistent and depends only on itself, the DomainDependenceRecord is not necessary.
-		if (!(TopLevelTransaction.isConsistent(pair) && TopLevelTransaction.dependsOnlyOnItself(pair))) {
-		    new DomainDependenceRecord(existingDomainObject, this, (Set<Depended>) pair.first, (Boolean) pair.second);
-		}
+	int count = 0;
+	for (DomainMetaObject existingMetaObject : metaObjects) {
+	    count++;
+	    if ((count % MAX_NUMBER_OF_OBJECTS_TO_PROCESS) == 0) {
+		// Commits the current, and starts a new write transaction.
+		// This is necessary to split the load of the mass creation of DomainDependenceRecords among several transactions.
+		// Each transaction processes a maximum of MAX_NUMBER_OF_OBJECTS_TO_PROCESS objects in order to avoid OutOfMemoryExceptions.
+		// Because this method checks for repeated OwnDependenceRecords of each meta object being checked, there is no problem with
+		// processing only an incomplete part of the objects of the given class.
+		Transaction.beginTransaction();
+	    }
+	    
+	    // The predicate was already checked during a previous incomplete initialization of this DomainConsistencyPredicate
+	    if (existingMetaObject.hasOwnDependenceRecord(this)) {
+		continue;
+	    }
+	    Pair pair = executePredicateForOneObject(existingMetaObject.getDomainObject(), getPredicate());
+	    // If an object is consistent and only depends on itself, the DomainDependenceRecord is not necessary.
+	    if (!(TopLevelTransaction.isConsistent(pair) && TopLevelTransaction.dependsOnlyOnItself(pair))) {
+		new DomainDependenceRecord(existingMetaObject.getDomainObject(), this, (Set<Depended>) pair.first,
+			(Boolean) pair.second);
 	    }
 	}
     }

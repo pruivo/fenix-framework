@@ -121,6 +121,10 @@ public class BPlusTree<T extends DomainObject> extends BPlusTree_Base implements
 	return this.getRoot().size();
     }
 
+    public boolean isEmpty() {
+	return size() == 0;
+    }
+
     /**
      * Completly deletes this <code>BPlusTree</code>, and all its
      * {@link AbstractNode}s. Does not delete any {@link DomainObject} contained

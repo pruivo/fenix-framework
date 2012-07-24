@@ -44,7 +44,7 @@ public class FinalConsistencyPredicate extends FinalConsistencyPredicate_Base {
      */
     @Override
     public void executeConsistencyPredicateForMetaClassAndSubclasses(DomainMetaClass metaClass) {
-	executeConsistencyPredicateForExistingDomainObjects(metaClass.getExistingDomainObjects());
+	executeConsistencyPredicateForExistingDomainObjects(metaClass);
 
 	for (DomainMetaClass metaSubclass : metaClass.getDomainMetaSubclasses()) {
 	    executeConsistencyPredicateForMetaClassAndSubclasses(metaSubclass);

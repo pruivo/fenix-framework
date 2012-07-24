@@ -91,6 +91,7 @@ class DomainMetaClass {
 class consistencyPredicates.DomainConsistencyPredicate {
 	PredicateMethod predicate;
 	String ojbConcreteClass;
+	Boolean finalized;
 }
 
 	class consistencyPredicates.PublicConsistencyPredicate extends consistencyPredicates.DomainConsistencyPredicate {
