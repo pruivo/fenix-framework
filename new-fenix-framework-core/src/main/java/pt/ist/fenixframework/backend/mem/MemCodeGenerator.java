@@ -6,20 +6,20 @@ import pt.ist.fenixframework.dml.DefaultCodeGenerator;
 import pt.ist.fenixframework.dml.CompilerArgs;
 import pt.ist.fenixframework.dml.DomainModel;
 
-public class CoreCodeGenerator extends DefaultCodeGenerator {
+public class MemCodeGenerator extends DefaultCodeGenerator {
 
-    public CoreCodeGenerator(CompilerArgs compArgs, DomainModel domainModel) {
+    public MemCodeGenerator(CompilerArgs compArgs, DomainModel domainModel) {
         super(compArgs, domainModel);
     }
 
     @Override
     protected String getDomainClassRoot() {
-        return CoreDomainObject.class.getName();
+        return MemDomainObject.class.getName();
     }
 
     @Override
     protected String getBackEndName() {
-        return DefaultBackEnd.BACKEND_NAME;
+        return MemBackEnd.BACKEND_NAME;
     }
 
     @Override

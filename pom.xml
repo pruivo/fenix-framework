@@ -26,6 +26,7 @@
         <module>fenix-framework-backend-infinispan</module>
         <module>fenix-framework-archetypes</module>
         <module>fenix-framework-adt-bplustree</module>
+        <module>fenix-framework-indexes</module>
     </modules>
 
     <build>

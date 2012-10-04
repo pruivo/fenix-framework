@@ -15,7 +15,7 @@ public class DefaultConfig extends Config {
     protected final BackEnd backEnd;
 
     public DefaultConfig() {
-        this.backEnd = new DefaultBackEnd();
+        this.backEnd = new MemBackEnd();
     }
 
     @Override

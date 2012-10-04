@@ -1,0 +1,110 @@
+package pt.ist.fenixframework.example.helloworld;
+
+valueType java.lang.Integer as Int {
+    externalizeWith {
+        String toString();
+    }
+}
+
+valueType java.lang.Integer as Int2 {
+    externalizeWith {
+        Int intValue();
+    }
+}
+
+// valueType java.lang.String as MyString {
+//     externalizeWith {
+//         String toString();
+//     }
+// }
+
+// valueType java.math.BigInteger as BigInt {
+//     externalizeWith {
+//         MyString toString();
+//         int signum();
+//     }
+// }
+
+class A;
+class B;
+
+relation AToB {
+    A playsRole a;
+    B playsRole b;
+}
+
+relation AToBs {
+    A playsRole a1;
+    B playsRole bs  {
+        multiplicity *;
+    }
+}
+
+class HelloWorldApplication;
+
+class Person {
+    Int2 someType;
+    @indexed String name;
+    // primitive types
+    boolean aboolean;
+    byte abyte;
+    char achar;
+    short ashort;
+    int aint;
+    float afloat;
+    long along;
+    double adouble;
+
+    // their wrappers
+    Boolean aBoolean;
+    Byte aByte;
+    Character aCharacter;
+    Short aShort;
+    Integer aInteger;
+    Float aFloat;
+    Long aLong;
+    Double aDouble;
+
+    // String is, of course, essential
+    String aString;
+
+    // we need something binary, also
+    bytearray abyteArray;
+
+    // JodaTime types
+    DateTime aDateTime;
+    LocalDate aLocalDate;
+    LocalTime aLocalTime;
+    Partial aPartial;
+}
+
+relation KnownPeople {
+  Person playsRole person {
+    multiplicity 0..*;
+  }
+
+  HelloWorldApplication playsRole app {
+    multiplicity 1..1;
+  }
+}
+
+relation RootHasPeople {
+    .pt.ist.fenixframework.DomainRoot playsRole;
+    Person playsRole people {
+        multiplicity *;
+    }
+}
+
+relation HelloWorldHasAnything {
+    .DomainObject playsRole domainObjects {
+        multiplicity *;
+    }
+    HelloWorldApplication playsRole {
+        multiplicity *;
+    }
+}
+
+relation DomainRootHasIndex {
+    .pt.ist.fenixframework.core.adt.bplustree.BPlusTree playsRole index;
+    .pt.ist.fenixframework.DomainRoot playsRole;
+}
