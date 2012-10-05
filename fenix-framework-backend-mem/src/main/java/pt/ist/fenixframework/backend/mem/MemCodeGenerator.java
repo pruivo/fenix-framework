@@ -5,8 +5,9 @@ import pt.ist.fenixframework.atomic.DefaultContextFactory;
 import pt.ist.fenixframework.dml.DefaultCodeGenerator;
 import pt.ist.fenixframework.dml.CompilerArgs;
 import pt.ist.fenixframework.dml.DomainModel;
+import pt.ist.fenixframework.dml.IndexesCodeGenerator;
 
-public class MemCodeGenerator extends DefaultCodeGenerator {
+public class MemCodeGenerator extends IndexesCodeGenerator {
 
     public MemCodeGenerator(CompilerArgs compArgs, DomainModel domainModel) {
         super(compArgs, domainModel);
@@ -24,7 +25,7 @@ public class MemCodeGenerator extends DefaultCodeGenerator {
 
     @Override
     protected String getDefaultConfigClassName() {
-        return DefaultConfig.class.getName();
+        return MemConfig.class.getName();
     }
 
     @Override

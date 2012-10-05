@@ -103,8 +103,3 @@ relation HelloWorldHasAnything {
         multiplicity *;
     }
 }
-
-relation DomainRootHasIndex {
-    .pt.ist.fenixframework.core.adt.bplustree.BPlusTree playsRole index;
-    .pt.ist.fenixframework.DomainRoot playsRole;
-}

@@ -4,6 +4,7 @@ import java.io.PrintWriter;
 
 import pt.ist.fenixframework.atomic.ContextFactory;
 import pt.ist.fenixframework.atomic.DefaultContextFactory;
+import pt.ist.fenixframework.dml.CodeGenerator;
 import pt.ist.fenixframework.dml.DefaultCodeGenerator;
 import pt.ist.fenixframework.dml.CompilerArgs;
 import pt.ist.fenixframework.dml.DomainClass;
@@ -13,7 +14,7 @@ import pt.ist.fenixframework.dml.Slot;
 import pt.ist.fenixframework.dml.ValueType;
 import pt.ist.fenixframework.dml.ValueTypeSerializationGenerator;
 
-public class InfinispanCodeGenerator extends DefaultCodeGenerator {
+public class InfinispanCodeGenerator extends CodeGenerator {
 
     protected static final String VT_SERIALIZER =
         ValueTypeSerializationGenerator.SERIALIZER_CLASS_SIMPLE_NAME + "." +

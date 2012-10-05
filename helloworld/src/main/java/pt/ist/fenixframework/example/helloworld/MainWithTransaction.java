@@ -20,7 +20,7 @@ import pt.ist.fenixframework.core.adt.bplustree.BPlusTree;
 import pt.ist.fenixframework.core.adt.bplustree.InnerNode;
 import pt.ist.fenixframework.core.adt.bplustree.LeafNode;
 import pt.ist.fenixframework.backend.infinispan.InfinispanConfig;
-import pt.ist.fenixframework.backend.mem.DefaultConfig;
+import pt.ist.fenixframework.backend.mem.MemConfig;
 import pt.ist.fenixframework.dml.DomainModel;
 
 

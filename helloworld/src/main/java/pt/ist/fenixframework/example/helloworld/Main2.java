@@ -18,7 +18,7 @@ import pt.ist.fenixframework.adt.bplustree.InnerNode;
 import pt.ist.fenixframework.adt.bplustree.LeafNode;
 import pt.ist.fenixframework.backend.infinispan.InfinispanConfig;
 import pt.ist.fenixframework.backend.infinispan.OID;
-import pt.ist.fenixframework.backend.mem.DefaultConfig;
+import pt.ist.fenixframework.backend.mem.MemConfig;
 import pt.ist.fenixframework.core.*;
 import pt.ist.fenixframework.dml.DomainModel;
 
@@ -32,12 +32,12 @@ public class Main2 {
     static HelloWorldApplication app;
 
     public static void main(final String[] args) {
-        // Config config = new DefaultConfig() {{
+        // Config config = new MemConfig() {{
         //     domainModelURLs = resourceToURLArray("helloworld.dml");
         //     // rootClass = HelloWorldApplication.class;
         // }};
         MultiConfig configs = new MultiConfig();
-        Config mem = new DefaultConfig() {{
+        Config mem = new MemConfig() {{
             domainModelURLs = resourcesToURLArray("fenix-framework-domain-root.dml", "fenix-framework-adt-bplustree.dml", "helloworld.dml");
             // rootClass = HelloWorldApplication.class;
         }};

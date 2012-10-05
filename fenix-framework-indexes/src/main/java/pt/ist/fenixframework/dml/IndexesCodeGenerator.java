@@ -96,14 +96,10 @@ public class IndexesCodeGenerator extends DefaultCodeGenerator {
     }
     
     protected void generateIndexationInSetter(String fullDomainClassName, Slot slot, PrintWriter out) {
-	// Initialize the Index trees if needed.
-	// TODO move this code to the bootstrap process
-	generateIndexesInitialization(fullDomainClassName, slot, out);
-	
 	// Check if the previous field was null. If not, remove it from the index.
 	print(out, "if (");
 	print(out, getSlotExpression(slot.getName()));
-	print(out, "!= null)");
+	print(out, " != null)");
 	newBlock(out);
 	print(out, "((");
 	print(out, BPLUS_TREE_FULL_CLASS);
@@ -121,7 +117,7 @@ public class IndexesCodeGenerator extends DefaultCodeGenerator {
 	// Check if the new field value is null. If not, add it to the index.
 	print(out, "if (");
 	print(out, slot.getName());
-	print(out, "!= null)");
+	print(out, " != null)");
 	newBlock(out);
 	print(out, "((");
 	print(out, BPLUS_TREE_FULL_CLASS);
@@ -137,37 +133,6 @@ public class IndexesCodeGenerator extends DefaultCodeGenerator {
 	closeBlock(out);
     }
 
-    protected void generateIndexesInitialization(String fullDomainClassName, Slot slot, PrintWriter out) {
-	print(out, "if (");
-	print(out, FENIX_FRAMEWORK_FULL_CLASS);
-	print(out, ".getDomainRoot().getIndexRoot()");
-	print(out, " == null)");
-	newBlock(out);
-	print(out, FENIX_FRAMEWORK_FULL_CLASS);
-	print(out, ".getDomainRoot().setIndexRoot(new ");
-	print(out, BPLUS_TREE_FULL_CLASS);
-	print(out, "<");
-	print(out, BPLUS_TREE_FULL_CLASS);
-	print(out, ">());");
-	closeBlock(out);
-	
-	print(out, "if (");
-	print(out, FENIX_FRAMEWORK_FULL_CLASS);
-	print(out, ".getDomainRoot().getIndexRoot().get(");
-	print(out, getIndexedFieldKey(fullDomainClassName, slot.getName()));
-	print(out, ") == null)");
-	newBlock(out);
-	print(out, FENIX_FRAMEWORK_FULL_CLASS);
-	print(out, ".getDomainRoot().getIndexRoot().insert(");
-	print(out, getIndexedFieldKey(fullDomainClassName, slot.getName()));
-	print(out, ", new ");
-	print(out, BPLUS_TREE_FULL_CLASS);
-	print(out, "<");
-	print(out, fullDomainClassName);
-	print(out, ">());");
-	closeBlock(out);
-    }
-    
     protected String getIndexedFieldKey(String fullDomainClassName, String slotName) {
 	return "\"" + fullDomainClassName + "." + slotName + "\"";
     }
@@ -196,10 +161,6 @@ public class IndexesCodeGenerator extends DefaultCodeGenerator {
     }
     
     protected void generateStaticIndexMethodBody(String fullDomainClassName, Slot slot, PrintWriter out) {
-	// Initialize the Index trees if needed.
-	// TODO move this code to the bootstrap process
-	generateIndexesInitialization(fullDomainClassName, slot, out);
-	
 	// Generate the search
 	print(out, "return ");
 	print(out, "((");
@@ -221,7 +182,7 @@ public class IndexesCodeGenerator extends DefaultCodeGenerator {
     }
     
     protected String getStaticIndexMethodName(Slot slotName) {
-	return "findBy" + slotName.getName();
+	return "findBy" + slotName.getName().substring(0, 1).toUpperCase() + slotName.getName().substring(1);
     }
     
 }

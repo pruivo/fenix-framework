@@ -21,7 +21,7 @@ import pt.ist.fenixframework.core.adt.bplustree.BPlusTree;
 import pt.ist.fenixframework.core.adt.bplustree.InnerNode;
 import pt.ist.fenixframework.core.adt.bplustree.LeafNode;
 import pt.ist.fenixframework.backend.infinispan.InfinispanConfig;
-import pt.ist.fenixframework.backend.mem.DefaultConfig;
+import pt.ist.fenixframework.backend.mem.MemConfig;
 import pt.ist.fenixframework.dml.DomainModel;
 
 
@@ -34,12 +34,12 @@ public class Main {
     static HelloWorldApplication app;
 
     public static void main(final String[] args) {
-        // Config config = new DefaultConfig() {{
+        // Config config = new MemConfig() {{
         //     domainModelURLs = resourceToURLArray("helloworld.dml");
         //     // rootClass = HelloWorldApplication.class;
         // }};
         MultiConfig configs = new MultiConfig();
-        Config mem = new DefaultConfig() {{
+        Config mem = new MemConfig() {{
             domainModelURLs = resourcesToURLArray("fenix-framework-domain-root.dml", "fenix-framework-bplustree-domain-object.dml", "helloworld.dml");
             // rootClass = HelloWorldApplication.class;
         }};
@@ -193,77 +193,14 @@ public class Main {
         AbstractDomainObject person7 = new Person("person7", app);
         AbstractDomainObject person8 = new Person("person8", app);
 
-        System.out.println("OID=" + person0.getOid() + "; ExternalId=" + person0.getExternalId());
-
-        // use B+Tree
-        System.out.println("====================================== B+Tree");
-
-        root.setIndex(new BPlusTree<AbstractDomainObject>());
-
-        try {
-            root.getIndex().insert(person1);
-            root.getIndex().insert(person3);
-            root.getIndex().insert(person5);
-            root.getIndex().insert(person2);
-            root.getIndex().insert(person0);
-            root.getIndex().insert(person4);
-            root.getIndex().insert(person8);
-            root.getIndex().insert(person8);
-            root.getIndex().insert(person7);
-            root.getIndex().insert(person6);
-            root.getIndex().insert(person8);
-            root.getIndex().insert(root);
-
-
-            System.out.println("Will iterate");
-            Iterator it = root.getIndex().iterator();
-            while (it.hasNext()) {
-                AbstractDomainObject ado = (AbstractDomainObject)it.next();
-                System.out.println(ado);
-            }
-            System.out.println("Done iterating");
-
-
-            // for (int i = 0; i < 302; i++) {
-            //     Person p = new Person("Ze", app);
-            //     root.getIndex().insert((Comparable)p.getOid(), p);
-            // }
-
-            // System.out.println("Registering");
-            // for (int i = 0; i < 1; i++) {
-            //     Person p = new Person("Ze", app);
-            //     root.getIndex().insert((Comparable)p.getOid(), p);
-            // }
-
-            System.out.println(root.getIndex().size());
-            
-        } catch (Exception e) {
-            e.printStackTrace();
+        
+        for (int i = 0; i < 9; i++) {
+            System.out.println(Person.findByName("person" + i));
         }
-
-        System.out.println("====================================== TreeMap externalization");
-        LeafNode n = (LeafNode)root.getIndex().getRoot();
-        System.out.println("Leafnode: " + n);
-            
-        TreeMap<Comparable,pt.ist.fenixframework.core.AbstractDomainObject> entries = n.getEntries();
-        displayTreeMap(entries);
-
-        // byte[] extern = AbstractNode.externalizeTreeMap(n.getEntries());
-        Serializable extern = AbstractNode.externalizeTreeMap(n.getEntries());
-        TreeMap t1 = AbstractNode.internalizeTreeMap(extern);
-        displayTreeMap(t1);
-
-        System.out.println("Extern/Inter ok?: " + t1.equals(n.getEntries()));
-
-        byte[] extern2 = Externalization.externalizeObject(ValueTypeSerializer.serialize$TreeMapWithKeyOID(entries));
-        byte[] extern3 = Externalization.externalizeObject(ValueTypeSerializer.serialize$GenericTreeMap(entries));
-
-        TreeMap t2 = ValueTypeSerializer.deSerialize$TreeMapWithKeyOID((Serializable)Externalization.internalizeObject(extern2));
-        TreeMap t3 = ValueTypeSerializer.deSerialize$GenericTreeMap((Serializable)Externalization.internalizeObject(extern3));
-
-        displayTreeMap(t2);
-        displayTreeMap(t3);
-        System.out.println("Extern/Inter ok?: " + t1.equals(n.getEntries()));
+        
+        Person.findByName("person5").setName("person42");
+        System.out.println("Person5 no longer exists? " + (Person.findByName("person5") == null));
+        System.out.println("Person42 does exist? " + Person.findByName("person42"));
     }
 
 

@@ -12,4 +12,8 @@ public class Person extends Person_Base {
     public void mmm() {
         System.out.println("doing nothing");
     }
+    
+    public String toString() {
+	return getName();
+    }
 }
