@@ -286,7 +286,7 @@ public class DomainModel implements Serializable {
 	for (DomainClass domClass : classes.values()) {
 	    for (Slot slot : domClass.getSlotsList()) {
 		for (Annotation ann : slot.getAnnotations()) {
-		    List<AnnotatedSlot> annotatedSlotsList = this.annotatedSlots.get(ann);
+		    List<AnnotatedSlot> annotatedSlotsList = this.annotatedSlots.get(ann.getName());
 		    if (annotatedSlotsList == null) {
 			annotatedSlotsList = new ArrayList<AnnotatedSlot>();
 			this.annotatedSlots.put(ann.getName(), annotatedSlotsList);
