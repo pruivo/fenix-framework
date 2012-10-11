@@ -2,7 +2,7 @@ package pt.ist.fenixframework.dml;
 
 public class Annotation {
 
-    public static final String INDEX_ANNOTATION = "@indexed";
+    public static final String INDEX_ANNOTATION = "{\"unique\":true}";
     
     private String name;
     

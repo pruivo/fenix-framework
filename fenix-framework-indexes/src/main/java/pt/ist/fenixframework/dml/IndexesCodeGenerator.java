@@ -16,89 +16,31 @@ import pt.ist.fenixframework.adt.bplustree.BPlusTree;
 public class IndexesCodeGenerator extends DefaultCodeGenerator {
 
     public static final String FENIX_FRAMEWORK_FULL_CLASS = FenixFramework.class.getName();
-    public static final String BPLUS_TREE_FULL_CLASS = BPlusTree.class.getName();
+    /** Cannot refer directly to the BPlusTree.class because that would load the class into the VM, and thus load the base class.
+     * That is a problem because this class (the CodeGenerator) is loaded when passed to the DmlCompiler. And only after that, will 
+     * the base class ever be generated. Thus we have a cyclic dependency and must break it by only using the BPlusTree name. */
+    public static final String BPLUS_TREE_FULL_CLASS = "pt.ist.fenixframework.adt.bplustree.BPlusTree";
     
     public IndexesCodeGenerator(CompilerArgs compArgs, DomainModel domainModel) {
 	super(compArgs, domainModel);
     }
 
-    /*
-     * The following mimics the abstract CodeGenerator structure to produce the 
-     * setter. However, it now passes around both the DomainClass and Slot instances
-     * so that we can use them within the method body production to check if the slot 
-     * is being indexed and in that case add the indexation behavior.
-     */
-    
     @Override
-    protected void generateBaseClassBody(DomainClass domClass, PrintWriter out) {
-        generateStaticSlots(domClass, out);
-        newline(out);
-
-        generateSlots(domClass.getSlots(), out);
-        newline(out);
-
-        generateRoleSlots(domClass.getRoleSlots(), out);
-        newline(out);
-
-        generateInitInstance(domClass, out);
-
-        // constructors
-        newline(out);
-        printMethod(out, "protected", "", domClass.getBaseName());
-        startMethodBody(out);
-        generateBaseClassConstructorsBody(domClass, out);
-        endMethodBody(out);
-        
-        // slots getters/setters
-        // Note: difference is in the following two calls
-        generateSlotsAccessors(domClass, out);
-        
-        generateIndexMethods(domClass, out);
-        
-        // roles methods
-        generateRoleSlotsMethods(domClass.getRoleSlots(), out);
-
-        // // generate slot consistency predicates
-        // generateSlotConsistencyPredicates(domClass, out);
-    }
-    
-    protected void generateSlotsAccessors(DomainClass domClass, PrintWriter out) {
-	Iterator<Slot> slotsIter = domClass.getSlots();
-        while (slotsIter.hasNext()) {
-            generateSlotAccessors(domClass.getFullName(), (Slot) slotsIter.next(), out);
-        }
-    }
-    
-    protected void generateSlotAccessors(String fullDomainClassName, Slot slot, PrintWriter out) {
-        generateSlotGetter(slot.getName(), slot.getTypeName(), out);
-        generateSlotSetter(fullDomainClassName, slot, out);
-    }
-    
-    protected void generateSlotSetter(String fullDomainClassName, Slot slot, PrintWriter out) {
-        generateSetter(fullDomainClassName, slot, "public", "set" + capitalize(slot.getName()), out);
-    }
-    
-    protected void generateSetter(String fullDomainClassName, Slot slot, String visibility, String setterName, PrintWriter out) {
-        newline(out);
-
-        printFinalMethod(out, visibility, "void", setterName, makeArg(slot.getTypeName(), slot.getName()));
-
-        startMethodBody(out);
-        generateSetterBody(fullDomainClassName, slot, setterName, out);
-        endMethodBody(out);            
-    }
-    
-    protected void generateSetterBody(String fullDomainClassName, Slot slot, String setterName, PrintWriter out) {
-	if (slot.hasIndexedAnnotation()) {
-	    generateIndexationInSetter(fullDomainClassName, slot, out);
-	}
+    protected void generateSetterBody(DomainClass domainClass, String setterName, Slot slot, PrintWriter out) {
+	generateIndexationInSetter(domainClass, slot, out);
         printWords(out, getSlotExpression(slot.getName()), "=", slot.getName() + ";");
+    }
+
+    protected void generateIndexationInSetter(DomainClass domainClass, Slot slot, PrintWriter out) {
+	if (slot.hasIndexedAnnotation()) {
+	    generateIndexationInSetter(domainClass.getFullName(), slot, out);
+	}
     }
     
     protected void generateIndexationInSetter(String fullDomainClassName, Slot slot, PrintWriter out) {
 	// Check if the previous field was null. If not, remove it from the index.
 	print(out, "if (");
-	print(out, getSlotExpression(slot.getName()));
+	print(out, "get" + capitalize(slot.getName() + "()"));
 	print(out, " != null)");
 	newBlock(out);
 	print(out, "((");
@@ -110,7 +52,7 @@ public class IndexesCodeGenerator extends DefaultCodeGenerator {
 	print(out, ".getDomainRoot().getIndexRoot()).get(");
 	print(out, getIndexedFieldKey(fullDomainClassName, slot.getName()));
 	print(out, ").remove(");
-	print(out, getSlotExpression(slot.getName()));
+	print(out, "get" + capitalize(slot.getName() + "()"));
 	print(out, ");");
 	closeBlock(out);
 	
