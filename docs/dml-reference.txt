@@ -289,11 +289,7 @@ slots in DML. For now, the DML compiler only allows the usage described above.
 2) Compilation step
 After enhancing the application's DML files with some unique slots, you must 
 recompile the application so that the newly generated domain classes (the 
-*_Base.java ones) are upgraded with index search methods. This step assumes that 
-the configuration of the application is using a backend with support for indexes.
-At the moment of this writing, this is true for the backend-mem and 
-backend-infinispan. There is no reason why any backend should violate this and 
-not have internal support for indexes.
+*_Base.java ones) are upgraded with index search methods.
 
 
 3) Changing the application code

@@ -15,7 +15,7 @@ import java.util.Set;
  * comparable to each other (e.g. the same BPlusTree instance cannot simultaneously support keys of
  * type Integer and String).
  */
-public class BPlusTree<T extends Serializable> extends BPlusTree_Base {
+public class BPlusTree<T extends Serializable> extends BPlusTree_Base implements IBPlusTree<T> {
     
     /* Special last key */
     private static class ComparableLastKey implements Comparable, Serializable {

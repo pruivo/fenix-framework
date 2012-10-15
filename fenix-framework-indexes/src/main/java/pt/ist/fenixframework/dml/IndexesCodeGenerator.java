@@ -4,7 +4,8 @@ import java.io.PrintWriter;
 import java.util.Iterator;
 
 import pt.ist.fenixframework.FenixFramework;
-import pt.ist.fenixframework.adt.bplustree.BPlusTree;
+import pt.ist.fenixframework.adt.bplustree.IBPlusTree;
+import pt.ist.fenixframework.indexes.InitializerBPlusTree;
 
 /**
  * This code generator enhances the default generation by adding indexation to fields 
@@ -20,30 +21,17 @@ public class IndexesCodeGenerator extends DefaultCodeGenerator {
      * That is a problem because this class (the CodeGenerator) is loaded when passed to the DmlCompiler. And only after that, will 
      * the base class ever be generated. Thus we have a cyclic dependency and must break it by only using the BPlusTree name. */
     public static final String BPLUS_TREE_FULL_CLASS = "pt.ist.fenixframework.adt.bplustree.BPlusTree";
+    public static final String INTERFACE_BPLUS_TREE_FULL_CLASS = IBPlusTree.class.getName();
+    public static final String INITIALIZER_BPLUS_TREE_FULL_CLASS = InitializerBPlusTree.class.getName();
 
     public IndexesCodeGenerator(CompilerArgs compArgs, DomainModel domainModel) {
 	super(compArgs, domainModel);
     }
 
     protected void generateIndexationInSetter(DomainClass domainClass, Slot slot, PrintWriter out) {
-	if (slot.hasIndexedAnnotation()) {
-	    generateIndexationInSetter(domainClass.getFullName(), slot, out);
+	if (!slot.hasIndexedAnnotation()) {
+	    return;
 	}
-    }
-
-    protected void generateIndexationInSetter(String fullDomainClassName, Slot slot, PrintWriter out) {
-	print(out, BPLUS_TREE_FULL_CLASS);
-	print(out, " index = ");
-	print(out, "((");
-	print(out, BPLUS_TREE_FULL_CLASS);
-	print(out, "<");
-	print(out, BPLUS_TREE_FULL_CLASS);
-	print(out, ">)");
-	print(out, FENIX_FRAMEWORK_FULL_CLASS);
-	print(out, ".getDomainRoot().getIndexRoot()).get(");
-	print(out, getIndexedFieldKey(fullDomainClassName, slot.getName()));
-	println(out, ");");
-	
 	// Check if the previous field was null. If not, remove it from the index.
 	boolean slotMayBeNull = mayBeNull(slot.getSlotType());
 	if (slotMayBeNull) {
@@ -53,7 +41,8 @@ public class IndexesCodeGenerator extends DefaultCodeGenerator {
 	    newBlock(out);
 	}
 	
-	print(out, "index.remove(");
+	print(out, getStaticFieldName(slot.getName()));
+	print(out, ".remove(");
 	print(out, "get" + capitalize(slot.getName() + "()"));
 	println(out, ");");
 	
@@ -69,9 +58,12 @@ public class IndexesCodeGenerator extends DefaultCodeGenerator {
 	    newBlock(out);
 	}
 	
-	print(out, "index.insert(");
+	print(out, getStaticFieldName(slot.getName()));
+	print(out, ".insert(");
 	print(out, slot.getName());
-	println(out, ", this);");
+	print(out, ", (");
+	print(out, domainClass.getFullName());
+	println(out, ")this);");
 	
 	if (slotMayBeNull) {
 	    closeBlock(out);
@@ -97,43 +89,62 @@ public class IndexesCodeGenerator extends DefaultCodeGenerator {
     protected void generateIndexMethods(DomainClass domainClass, PrintWriter out) {
 	Iterator<Slot> slotsIter = domainClass.getSlots();
 	while (slotsIter.hasNext()) {
-	    generateSlotSearchIndex(domainClass.getFullName(), (Slot) slotsIter.next(), out);
+	    generateSlotSearchIndex(domainClass, (Slot) slotsIter.next(), out);
 	}
     }
 
-    protected void generateSlotSearchIndex(String fullDomainClassName, Slot slot, PrintWriter out) {
+    protected void generateSlotSearchIndex(DomainClass domainClass, Slot slot, PrintWriter out) {
 	if (slot.hasIndexedAnnotation()) {
-	    generateStaticIndexMethod(fullDomainClassName, slot, out);
+	    generateStaticIndexField(domainClass, slot, out);
+	    generateStaticIndexMethod(domainClass, slot, out);
 	}
     }
 
-    protected void generateStaticIndexMethod(String fullDomainClassName, Slot slot, PrintWriter out) {
+    private void generateStaticIndexField(DomainClass domainClass, Slot slot, PrintWriter out) {
+	newline(out);
+	
+	print(out, "public static transient ");
+	print(out, INTERFACE_BPLUS_TREE_FULL_CLASS);
+	print(out, "<");
+	print(out, domainClass.getFullName());
+	print(out, ">");
+	print(out, " ");
+	print(out, getStaticFieldName(slot.getName()));
+	print(out, " = new ");
+	print(out, INITIALIZER_BPLUS_TREE_FULL_CLASS);
+	print(out, "<");
+	print(out, domainClass.getFullName());
+	print(out, ">");
+	print(out, "(");
+	print(out, getIndexedFieldKey(domainClass.getFullName(), slot.getName()));
+	print(out, ", ");
+	print(out, domainClass.getBaseName());
+	print(out, ".class, \"");
+	print(out, getStaticFieldName(slot.getName()));
+	print(out, "\");");
+	
+	newline(out);
+    }
+    
+    private String getStaticFieldName(String slotName) {
+	return slotName + "$index";
+    }
+
+    protected void generateStaticIndexMethod(DomainClass domainClass, Slot slot, PrintWriter out) {
 	newline(out);
 
-	printFinalMethod(out, "public static", fullDomainClassName, getStaticIndexMethodName(slot), makeArg(slot.getTypeName(), slot.getName()));
+	printFinalMethod(out, "public static", domainClass.getFullName(), getStaticIndexMethodName(slot), makeArg(slot.getTypeName(), slot.getName()));
 
 	startMethodBody(out);
-	generateStaticIndexMethodBody(fullDomainClassName, slot, out);
+	generateStaticIndexMethodBody(domainClass.getFullName(), slot, out);
 	endMethodBody(out);
     }
 
     protected void generateStaticIndexMethodBody(String fullDomainClassName, Slot slot, PrintWriter out) {
 	// Generate the search
 	print(out, "return ");
-	print(out, "((");
-	print(out, BPLUS_TREE_FULL_CLASS);
-	print(out, "<");
-	print(out, fullDomainClassName);
-	print(out, ">)");
-	print(out, "((");
-	print(out, BPLUS_TREE_FULL_CLASS);
-	print(out, "<");
-	print(out, BPLUS_TREE_FULL_CLASS);
-	print(out, ">)");
-	print(out, FENIX_FRAMEWORK_FULL_CLASS);
-	print(out, ".getDomainRoot().getIndexRoot()).get(");
-	print(out, getIndexedFieldKey(fullDomainClassName, slot.getName()));
-	print(out, ")).get(");
+	print(out, getStaticFieldName(slot.getName()));
+	print(out, ".get(");
 	print(out, slot.getName());
 	print(out, ");");
     }
