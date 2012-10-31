@@ -183,6 +183,9 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
     protected void suspendTx() {
 	// close the broker to release the db connection on suspension
 	if (broker != null) {
+	    if (broker.isInTransaction()) {
+		broker.abortTransaction();
+	    }
 	    broker.close();
 	    broker = null;
 	}
@@ -246,6 +249,9 @@ public class TopLevelTransaction extends ConsistentTopLevelTransaction implement
     protected void finish() {
 	super.finish();
 	if (broker != null) {
+	    if (broker.isInTransaction()) {
+		broker.abortTransaction();
+	    }
 	    broker.close();
 	    broker = null;
 	}
