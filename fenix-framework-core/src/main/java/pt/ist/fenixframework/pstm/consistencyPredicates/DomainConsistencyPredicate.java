@@ -30,12 +30,13 @@ import pt.ist.fenixframework.pstm.collections.bplustree.BPlusTree;
 @NoDomainMetaObjects
 public abstract class DomainConsistencyPredicate extends DomainConsistencyPredicate_Base {
 
-    private static final int MAX_NUMBER_OF_OBJECTS_TO_PROCESS = 100000;
+    private static final int MAX_NUMBER_OF_OBJECTS_TO_PROCESS = 5000;
 
     public DomainConsistencyPredicate() {
 	super();
 	checkFrameworkNotInitialized();
 	setOjbConcreteClass(getClass().getName());
+	setFinalized(false);
     }
 
     /**
@@ -61,6 +62,12 @@ public abstract class DomainConsistencyPredicate extends DomainConsistencyPredic
 
     public boolean isFinalized() {
 	return getFinalized();
+    }
+
+    @Override
+    public void setFinalized(Boolean finalized) {
+	checkFrameworkNotInitialized();
+	super.setFinalized(finalized);
     }
 
     @Override

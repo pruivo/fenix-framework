@@ -39,7 +39,7 @@ import pt.ist.fenixframework.pstm.repository.DbUtil;
 @NoDomainMetaObjects
 public class DomainMetaClass extends DomainMetaClass_Base {
 
-    private static final int MAX_NUMBER_OF_OBJECTS_TO_PROCESS = 200000;
+    private static final int MAX_NUMBER_OF_OBJECTS_TO_PROCESS = 10000;
 
     /**
      * Compares two classes according to their hierarchies, such that a
@@ -99,6 +99,7 @@ public class DomainMetaClass extends DomainMetaClass_Base {
 	setDomainClass(domainClass);
 	DomainFenixFrameworkRoot.getInstance().addDomainMetaClasses(this);
 	setExistingDomainMetaObjects(new BPlusTree<DomainMetaObject>());
+	setFinalized(false);
 
 	System.out.println("[DomainMetaClass] Creating new a DomainMetaClass: " + domainClass);
     }
