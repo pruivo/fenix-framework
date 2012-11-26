@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import jvstm.TransactionalCommand;
 import pt.ist.fenixframework.FenixFramework;
 import pt.ist.fenixframework.pstm.collections.bplustree.BPlusTree;
 import pt.ist.fenixframework.pstm.consistencyPredicates.DomainConsistencyPredicate;
@@ -237,30 +238,55 @@ public class DomainMetaClass extends DomainMetaClass_Base {
      */
     protected void initExistingDomainObjects() {
 	checkFrameworkNotInitialized();
-	AbstractDomainObject existingDO = null;
-	List<String> oids = getExistingOIDsWithoutMetaObject(getDomainClass());
-	while (!oids.isEmpty()) {
-	    for (String oid : oids) {
-		try {
-		    existingDO = (AbstractDomainObject) AbstractDomainObject.fromOID(Long.valueOf(oid));
-		} catch (Exception ex) {
-		    System.out.println("WARNING - An exception was thrown while allocating the object: " + getDomainClass()
-			    + " - " + oid);
-		    ex.printStackTrace();
-		    continue;
-		}
-		DomainMetaObject metaObject = new DomainMetaObject();
-		metaObject.setDomainObject(existingDO);
-		addExistingDomainMetaObject(metaObject);
-	    }
 
-	    // Commits the current, and starts a new write transaction.
-	    // This is necessary to split the load of the mass creation of DomainMetaObjects among several transactions.
-	    // Each transaction processes a maximum of MAX_NUMBER_OF_OBJECTS_TO_PROCESS objects in order to avoid OutOfMemoryExceptions.
-	    // Because the JDBC query only returns objects that have no DomainMetaObjects, there is no problem with
-	    // processing only an incomplete part of the objects of this class.
-	    Transaction.beginTransaction();
-	    oids = getExistingOIDsWithoutMetaObject(getDomainClass());
+	// Ends the currently running transaction
+	Transaction.beginTransaction();
+
+	// Starts a new thread to process a limited number of existing objects.
+	// This is necessary to split the load of the mass creation of DomainMetaObjects among several transactions.
+	// Each thread processes a maximum of MAX_NUMBER_OF_OBJECTS_TO_PROCESS objects in order to avoid OutOfMemoryExceptions.
+	// Because the JDBC query only returns objects that have no DomainMetaObjects, there is no problem with
+	// processing only an incomplete part of the objects of this class.
+	int iterations = 1;
+	while (!getExistingOIDsWithoutMetaObject(getDomainClass()).isEmpty()) {
+	    MetaDomainObjectCreator creator = new MetaDomainObjectCreator();
+	    creator.start();
+	    try {
+		creator.join();
+		if ((iterations % 10) == 0) {
+		    System.out.println("[DomainMetaClass] Number of initialized " + getDomainClass().getSimpleName()
+			    + " objects: " + iterations * MAX_NUMBER_OF_OBJECTS_TO_PROCESS);
+		}
+		iterations++;
+	    } catch (InterruptedException e) {
+		e.printStackTrace();
+		throw new RuntimeException("Failed init existing domain objects", e);
+	    }
+	}
+    }
+
+    private class MetaDomainObjectCreator extends Thread {
+	@Override
+	public void run() {
+	    Transaction.withTransaction(false, new TransactionalCommand() {
+	        @Override
+	        public void doIt() {
+	            AbstractDomainObject existingDO = null;
+		    for (String oid : getExistingOIDsWithoutMetaObject(getDomainClass())) {
+			try {
+			    existingDO = (AbstractDomainObject) AbstractDomainObject.fromOID(Long.valueOf(oid));
+			} catch (Exception ex) {
+			    System.out.println("WARNING - An exception was thrown while allocating the object: "
+				    + getDomainClass() + " - " + oid);
+			    ex.printStackTrace();
+			    continue;
+			}
+			DomainMetaObject metaObject = new DomainMetaObject();
+			metaObject.setDomainObject(existingDO);
+			addExistingDomainMetaObject(metaObject);
+		    }
+		}
+	    });
 	}
     }
 
