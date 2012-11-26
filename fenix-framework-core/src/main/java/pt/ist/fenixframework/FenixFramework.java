@@ -93,21 +93,34 @@ public class FenixFramework {
      * and then initializes the {@link DomainFenixFrameworkRoot}.
      */
     private static void initDomainFenixFrameworkRoot() {
-	Transaction.withTransaction(new TransactionalCommand() {
-	    @Override
-	    public void doIt() {
-		if (getDomainFenixFrameworkRoot() == null) {
-		    try {
-			DomainFenixFrameworkRoot fenixFrameworkRoot = new DomainFenixFrameworkRoot();
-			PersistentRoot.addRoot(DomainFenixFrameworkRoot.ROOT_KEY, fenixFrameworkRoot);
-		    } catch (Exception exc) {
-			throw new Error(exc);
+	while (true) {
+	    try {
+		Transaction.withTransaction(new TransactionalCommand() {
+		    @Override
+		    public void doIt() {
+			if (getDomainFenixFrameworkRoot() == null) {
+			    DomainFenixFrameworkRoot fenixFrameworkRoot = new DomainFenixFrameworkRoot();
+			    PersistentRoot.addRoot(DomainFenixFrameworkRoot.ROOT_KEY, fenixFrameworkRoot);
+			}
+			getDomainFenixFrameworkRoot().initialize(getDomainModel());
 		    }
+		});
+		break;
+	    } catch (Throwable t) {
+		// Debug-related code
+		//if (t.getMessage().equals("It ends tonight.")) {
+		//    System.out.println("SUCCESS! The MetaClass initialization has finished! Finally!");
+		//    break;
+		//}
+		t.printStackTrace();
+		System.out
+			.println("ERROR: An exception was thrown during the initialization of the Consistency Predicates, retrying...");
+	    } finally {
+		if (Transaction.isInTransaction()) {
+		    Transaction.abort();
 		}
-
-		getDomainFenixFrameworkRoot().initialize(getDomainModel());
 	    }
-	});
+	}
     }
 
     public static DomainFenixFrameworkRoot getDomainFenixFrameworkRoot() {

@@ -123,6 +123,12 @@ public class DomainFenixFrameworkRoot extends DomainFenixFrameworkRoot_Base {
 	checkFrameworkNotInitialized();
 	if (FenixFramework.canCreateDomainMetaObjects()) {
 	    initializeDomainMetaClasses(domainModel);
+
+	    // Debug-related code
+	    // Commits the current, and starts a new write transaction.
+	    //Transaction.beginTransaction();
+	    //throw new Error("It ends tonight.");
+
 	    initializeDomainConsistencyPredicates();
 	    checkAllMethodsOverridingPredicates();
 	} else {
