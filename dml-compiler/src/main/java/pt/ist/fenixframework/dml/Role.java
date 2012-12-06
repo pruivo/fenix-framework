@@ -2,6 +2,8 @@ package pt.ist.fenixframework.dml;
 
 import java.io.Serializable;
 
+import org.json.simple.JSONObject;
+
 
 public class Role implements Serializable{
     public static final int MULTIPLICITY_MANY = -1;
@@ -13,6 +15,8 @@ public class Role implements Serializable{
     private DomainRelation relation;
     private String indexProperty;
     private boolean ordered = false;
+
+    private JSONObject meta;
     
 
     public Role(String name, DomainEntity type) {
@@ -77,6 +81,14 @@ public class Role implements Serializable{
         return (multiplicityLower > 0)
             || ((multiplicityUpper > 1) 
                 && (multiplicityUpper != MULTIPLICITY_MANY));
+    }
+
+    public JSONObject getMetadata() {
+	return meta;
+    }
+    
+    public void setMetadata(JSONObject meta) {
+	this.meta = meta;
     }
 }
 

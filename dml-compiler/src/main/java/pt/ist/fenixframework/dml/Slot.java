@@ -6,6 +6,8 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+import org.json.simple.JSONObject;
+
 public class Slot implements Serializable {
     
     public enum Option { REQUIRED }
@@ -15,10 +17,12 @@ public class Slot implements Serializable {
     private ValueType type;
     private Set<Option> slotOptions = EnumSet.noneOf(Option.class);
     private List<Annotation> annotations = new ArrayList<Annotation>();
+    private JSONObject metadata;
     
-    public Slot(String name, ValueType type) {
+    public Slot(String name, ValueType type, JSONObject metadata) {
         this.name = name;
         this.type = type;
+        this.metadata = metadata;
     }
 
     public String getName() {
@@ -69,6 +73,10 @@ public class Slot implements Serializable {
 	    }
 	}
 	return false;
+    }
+
+    public JSONObject getMetadata() {
+	return metadata;
     }
 
 //     public void generateSlotDeclaration(CodeWriter out) {

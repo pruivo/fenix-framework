@@ -20,23 +20,18 @@
         <plugins>
             
             <!-- Run ANTLR before compiling -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>antlr-maven-plugin</artifactId>
+		     <plugin>
+		       <groupId>org.antlr</groupId>
+		       <artifactId>antlr3-maven-plugin</artifactId>
                 <version>${version.maven.antlr-plugin}</version>
-                <configuration>
-                    <grammars>dml.g,dml.tree.g</grammars>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>generate-sources</phase>
-                        <!-- <phase>process-resources</phase> -->
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+		       <executions>
+		         <execution>
+		           <goals>
+		             <goal>antlr</goal>
+		           </goals>
+		         </execution>
+		       </executions>
+		     </plugin>
 
             <!-- Generate the AtomicInstance class immediatly after compiling -->
             <plugin>
@@ -82,8 +77,8 @@
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>antlr</groupId>
-            <artifactId>antlr</artifactId>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr-runtime</artifactId>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -92,6 +87,10 @@
         <dependency>
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
+        </dependency>
+        <dependency>
+        	<groupId>com.googlecode.json-simple</groupId>
+        	<artifactId>json-simple</artifactId>
         </dependency>
     </dependencies>
 

@@ -20,7 +20,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <!-- PLEASE KEEP THIS LIST SORTED ALPHABETICALLY!!!  THANKS -->
-        <version.antlr>2.7.7</version.antlr>
+        <version.antlr>3.4</version.antlr>
         <version.apache.ant>1.8.2</version.apache.ant>
         <version.asm>4.0</version.asm>
         <version.commons.io>2.4</version.commons.io>
@@ -41,7 +41,7 @@
         <version.jta>1.1</version.jta>
         <version.junit>3.8.1</version.junit>
         <version.jvstm-fenix>1.0</version.jvstm-fenix>
-        <version.maven.antlr-plugin>2.2</version.maven.antlr-plugin>
+        <version.maven.antlr-plugin>3.4</version.maven.antlr-plugin>
         <version.maven.build-helper-plugin>1.7</version.maven.build-helper-plugin>
         <version.maven.core>3.0.3</version.maven.core>
         <version.maven.exec-plugin>1.2.1</version.maven.exec-plugin>
@@ -216,8 +216,8 @@
                 <type>jar</type>
             </dependency>
             <dependency>
-                <groupId>antlr</groupId>
-                <artifactId>antlr</artifactId>
+                <groupId>org.antlr</groupId>
+                <artifactId>antlr-runtime</artifactId>
                 <version>${version.antlr}</version>
             </dependency>
             <dependency>
@@ -235,6 +235,11 @@
                 <artifactId>ant</artifactId>
                 <version>${version.apache.ant}</version>
             </dependency>
+            <dependency>
+        		<groupId>com.googlecode.json-simple</groupId>
+        		<artifactId>json-simple</artifactId>
+        		<version>1.1.1</version>
+        	</dependency>
             <dependency>
                 <groupId>org.apache.maven</groupId>
                 <artifactId>maven-core</artifactId>
