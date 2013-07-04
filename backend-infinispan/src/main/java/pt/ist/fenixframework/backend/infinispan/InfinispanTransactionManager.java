@@ -123,6 +123,7 @@ public class InfinispanTransactionManager implements TransactionManager {
 		    inTopLevelTransaction = true;
 		} else {
 		    logger.trace("Already inside a transaction. Not nesting.");
+            dumpStackTraceToLog();
 		}
 		// do some work
 		result = command.call();
@@ -189,6 +190,16 @@ public class InfinispanTransactionManager implements TransactionManager {
     // //do nothing
     // }
     // }
+
+    private void dumpStackTraceToLog() {
+        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+        StringBuilder builder = new StringBuilder();
+        builder.append("Stack Trace:").append(System.getProperty("line.separator"));
+        for (StackTraceElement stackTraceElement : stackTraceElements) {
+            builder.append("   ").append(stackTraceElement.toString()).append(System.getProperty("line.separator"));
+        }
+        logger.error(builder.toString());
+    }
 
     private void logException(Exception e) {
 	logger.info("Exception caught in transaction: " + e.getLocalizedMessage());
