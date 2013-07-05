@@ -5,12 +5,12 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Properties;
 
+import eu.cloudtm.RequestProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pt.ist.fenixframework.backend.BackEnd;
 import pt.ist.fenixframework.backend.BackEndId;
-import pt.ist.fenixframework.backend.BasicClusterInformation;
 import pt.ist.fenixframework.backend.ClusterInformation;
 import pt.ist.fenixframework.dml.DmlCompilerException;
 import pt.ist.fenixframework.dml.DomainModel;
@@ -114,6 +114,8 @@ public class FenixFramework {
     private static boolean initialized = false;
 
     private static Config config;
+
+    private static RequestProcessor receiver;
 
     /**
      * This is initialized on first invocation of {@link FenixFramework#getDomainModel()}, which
@@ -456,5 +458,18 @@ public class FenixFramework {
      */
     public static ClusterInformation getClusterInformation() {
         return getConfig().getBackEnd().getClusterInformation();
+    }
+
+    public synchronized static void registerReceiver(RequestProcessor r) {
+        if (receiver == null) {
+            receiver = r;
+        }
+    }
+
+    public Object sendRequest(String request, String localityHint, String application, boolean sync) {
+        if (receiver != null) {
+            return receiver.onRequest(request);
+        }
+        return null;
     }
 }
