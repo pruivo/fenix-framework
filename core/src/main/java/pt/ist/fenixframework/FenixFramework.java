@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Properties;
 
-import eu.cloudtm.RequestProcessor;
+import pt.ist.fenixframework.messaging.RequestProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -466,7 +466,7 @@ public class FenixFramework {
         }
     }
 
-    public Object sendRequest(String request, String localityHint, String application, boolean sync) {
+    public static Object sendRequest(String request, String localityHint, String application, boolean sync) {
         if (receiver != null) {
             return receiver.onRequest(request);
         }

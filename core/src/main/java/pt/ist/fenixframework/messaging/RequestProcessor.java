@@ -1,4 +1,4 @@
-package eu.cloudtm;
+package pt.ist.fenixframework.messaging;
 
 /**
  * @author Pedro Ruivo
