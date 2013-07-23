@@ -6,10 +6,10 @@ import eu.cloudtm.Constants;
 import eu.cloudtm.LocalityHints;
 
 /**
- * {@link Grouper} implementation that knows how to groups Infinispan backend keys.
+ * {@link Grouper} implementation that knows how to group Infinispan backend keys.
  *
  * @author Pedro Ruivo
- * @since 2.6
+ * @since 2.6-cloudtm
  */
 public class FenixFrameworkGrouper implements Grouper<String> {
 
@@ -19,6 +19,9 @@ public class FenixFrameworkGrouper implements Grouper<String> {
         this.backEnd = backEnd;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String computeGroup(String key, String group) {
         //ignore the group parameter. It is != null when @Group is used in a key, but the keys are string.
@@ -28,6 +31,9 @@ public class FenixFrameworkGrouper implements Grouper<String> {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Class<String> getKeyType() {
         return String.class;
