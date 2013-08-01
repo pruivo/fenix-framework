@@ -14,8 +14,9 @@ public class ColocatedBPlusTree<T extends Serializable> extends ColocatedBPlusTr
 	// this is not used by the code generator
     }
     
-    public ColocatedBPlusTree(String relationName) {
-	super(new LocalityHints(new String[]{Constants.GROUP_ID, UUID.randomUUID().toString() + DomainBasedMap.RELATION_NAME_SEPARATOR + relationName}));
+    public ColocatedBPlusTree(LocalityHints localityHints, String relationName) {
+	super(new LocalityHints(new String[]{Constants.GROUP_ID, (localityHints == null ? UUID.randomUUID().toString() : localityHints.get(Constants.GROUP_ID)) +
+			DomainBasedMap.RELATION_NAME_SEPARATOR + relationName}));
     }
 
 }
