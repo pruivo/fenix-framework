@@ -100,4 +100,27 @@ public class CloudtmFeatureManagerTest {
         }
     }
 
+
+    @Test
+    public void testGeographSimulation() {
+        LocalityHints hints = new LocalityHints(new String[]{Constants.GROUP_ID, "+00001|-00010", "feature1", "+00001", "feature2", "-00010"});
+        createTestPerson(hints);
+
+        CloudtmFeatureManager manager = TEST_MANAGER;
+
+        String[] keys = FenixFramework.getStorageKeys(person);
+
+        for (String key : keys) {
+            Map<Feature, FeatureValue> featureValueMap = manager.getFeatures(key);
+
+            Assert.assertNotNull(featureValueMap.get(manager.getAllKeyFeatures()[0]));
+            Assert.assertEquals(featureValueMap.get(manager.getAllKeyFeatures()[0]).getValueAsString(), "1");
+
+            Assert.assertNotNull(featureValueMap.get(manager.getAllKeyFeatures()[1]));
+            Assert.assertEquals(featureValueMap.get(manager.getAllKeyFeatures()[1]).getValueAsString(), "-10");
+
+            Assert.assertNull(featureValueMap.get(manager.getAllKeyFeatures()[2]));
+        }
+    }
+
 }

@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class AbstractMessagingQueue implements MessagingQueue, AsyncRequestHandler, MembershipListener {
 
+    private static final int MAX_PROTOCOL_STAGGER_SLEEP = 30000; //millseconds
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     protected final Marshaller marshaller;
     private final ThreadPoolRequestProcessor threadPoolRequestProcessor;
@@ -35,6 +36,7 @@ public abstract class AbstractMessagingQueue implements MessagingQueue, AsyncReq
     private final AddressCache addressCache;
     private final ConcurrentMap<Address, Stats> globalStats;
     private final LoadBalancePolicy loadBalancePolicy;
+    private final Random random;
     protected volatile boolean primaryBackup;
     private State state;
 
@@ -84,6 +86,7 @@ public abstract class AbstractMessagingQueue implements MessagingQueue, AsyncReq
         }
 
         state = State.BOOT;
+        random = new Random(System.nanoTime());
     }
 
     @Override
@@ -122,8 +125,12 @@ public abstract class AbstractMessagingQueue implements MessagingQueue, AsyncReq
                 }
                 throw new ProcessorNotFoundException("Cannot handle request because it does not have access to the cache");
             case PROTOCOL:
-                primaryBackup = buffer.readBoolean();
+                boolean isPrimaryBackup = buffer.readBoolean();
                 reply(response, null);
+                if (primaryBackup && !isPrimaryBackup) {
+                    staggerSleepBeforeProtocolChange();
+                }
+                primaryBackup = isPrimaryBackup;
                 break;
             case LOAD:
                 boolean overloaded = buffer.readBoolean();
@@ -541,6 +548,10 @@ public abstract class AbstractMessagingQueue implements MessagingQueue, AsyncReq
 
     private boolean isWorker() {
         return threadPoolRequestProcessor != null;
+    }
+
+    private void staggerSleepBeforeProtocolChange() throws InterruptedException {
+        Thread.sleep(random.nextInt(MAX_PROTOCOL_STAGGER_SLEEP) + 50);
     }
 
     protected static enum State {
