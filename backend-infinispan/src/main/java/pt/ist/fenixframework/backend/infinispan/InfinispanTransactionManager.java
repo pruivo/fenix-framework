@@ -192,6 +192,7 @@ public class InfinispanTransactionManager implements TransactionManager {
 
     public static transient boolean BACKOFF_ON_ABORT = Boolean.parseBoolean(System.getProperty("backoffOnAbort", "false"));
     public static transient int INITIAL_BACKOFF = Integer.parseInt(System.getProperty("initialBackoffValue", "0"));
+    public static transient int MAX_BACKOFF = Integer.parseInt(System.getProperty("maxBackoffValue", "1000"));
     private static final transient ThreadLocal<Random> BACKOFF_RANDOM = new ThreadLocal<Random>() {
 	public Random initialValue() {
 	    return new Random();
@@ -246,7 +247,7 @@ public class InfinispanTransactionManager implements TransactionManager {
             if (finished) {
                 return result;
             } else if (BACKOFF_ON_ABORT) {
-        	Thread.sleep(BACKOFF_RANDOM.get().nextInt(INITIAL_BACKOFF * (int)Math.pow(2, restarts)));
+        	Thread.sleep(Math.min(MAX_BACKOFF, BACKOFF_RANDOM.get().nextInt(INITIAL_BACKOFF * (int)Math.pow(2, restarts))));
         	restarts++;
             }
 
